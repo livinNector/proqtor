@@ -11,7 +11,7 @@ authors = [
 ]
 
 dependencies = [
-  "markdown-to-json","pyyaml","bs4", "marko","Jinja2","playwright"
+  "markdown-to-json","pyyaml","pydantic","bs4", "marko","Jinja2","playwright"
 ]
 
 [project.optional-dependencies]
