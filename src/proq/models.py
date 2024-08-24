@@ -2,29 +2,15 @@ from pydantic import (
     BaseModel,
     Field,
     computed_field,
-    TypeAdapter,
     AliasChoices,
-    AliasPath,
+    field_validator,
 )
-from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
+import re
 
-
-class SeekConfig(BaseModel):
-    lang: str
-    deadline: datetime
-    evaluator: Literal["nsjail", "mooshak"] = "nsjail"
-    evaluator_type: Literal["test_cases", "evaluation_script"] = "test_cases"
-    ignore_presentation_error: bool = True
-    allow_compile: bool = True
-    show_sample_solution: bool = True
-    is_public: bool = False
-
-
-class LocalEvaluatorConfig(BaseModel):
-    source_file: str
-    build: Optional[str]
-    run: str
+ProgLang = Literal[
+    "c", "cpp", "java", "py", "py3", "verilog", "pl", "hs", "zip", "bash", "javascript"
+]
 
 
 class TestCase(BaseModel):
@@ -32,90 +18,57 @@ class TestCase(BaseModel):
     output: str
 
 
-class TestCases(BaseModel):
-    public_testcases: list[TestCase] = Field(
-        validation_alias="Public Testcases", description="The public testcases"
-    )
-    private_testcases: list[TestCase] = Field(
-        validation_alias="Private Testcases", description="The private testcases"
-    )
-
-
-from . import parse
+class ExecuteConfig(BaseModel):
+    source_filename: str | None = ""
+    build: str | None = ""
+    run: str | None = ""
 
 
 class Solution(BaseModel):
-    prefix: str = Field(description="The prefix of the solution")
-    template: str = Field(description="Template code between prefix and suffix")
-    solution: str = Field(description="The solution code to replace template")
-    suffix: str = Field(description="The suffix of the solution")
-    invisible_suffix: str = Field(
-        validation_alias=AliasChoices("invisible_suffix", "suffix_invisible"),
+    prefix: str = Field(default="", description="The prefix of the solution")
+    template: str = Field(
+        default="", description="Template code between prefix and suffix"
+    )
+    solution: str = Field(
+        default="", description="The solution code to replace template"
+    )
+    suffix: str = Field(default="", description="The suffix of the solution")
+    suffix_invisible: str = Field(
+        validation_alias=AliasChoices("suffix_invisible", "invisible_suffix"),
         description="The invisible part of the suffix that comes after suffix",
     )
-
-    @classmethod
-    def from_solution_template(solution_template):
-        """Extract the template from the solution template with tags for each sections"""
-        return parse.extract_solution(solution_template=solution_template)
+    lang: ProgLang = "py3"
+    execute_config: ExecuteConfig | None
 
     @computed_field(return_type=str)
     @property
     def solution_code(self):
         """The complete solution code with all prefix and suffix attached."""
-        return "".join([self.prefix, self.solution, self.suffix, self.invisible_suffix])
+        return "".join([self.prefix, self.solution, self.suffix, self.suffix_invisible])
 
     @computed_field(return_type=str)
     @property
     def template_code(self):
         """The complete template code with all prefix and suffix attached"""
-        return "".join([self.prefix, self.template, self.suffix, self.invisible_suffix])
+        return "".join([self.prefix, self.template, self.suffix, self.suffix_invisible])
 
 
-class ProqV1(BaseModel):
-    """Programming question version 1"""
+class ProQ(BaseModel):
+    """Pydantic model for a Programming Question (ProQ)"""
 
-    title: str = Field(validation_alias="Title", description="Title")
-    lang: str = Field(
-        description="Language code corresponding to the programming language."
-    )
+    title: str | None = Field(validation_alias="Title", description="Title")
     statement: str = Field(
         validation_alias="Problem Statement", description="The problem statement"
     )
-    public_testcases: list[TestCase] = Field(
-        validation_alias=AliasPath("Testcases", "Public Testcases"),
-        description="The Public and Private Testcases",
-    )
-    private_testcases: list[TestCase] = Field(
-        validation_alias=AliasPath("Testcases", "Private Testcases"),
-        description="The Public and Private Testcases",
-    )
+    public_testcases: list[TestCase] = Field(validation_alias="Public Test Cases")
+    private_testcases: list[TestCase] = Field(validation_alias="Private Test Cases")
     solution: Solution = Field(validation_alias="Solution", description="The solution")
-    seek_config: Optional[SeekConfig]
-    local_evaluator_config: Optional[LocalEvaluatorConfig] = Field(
-        validation_alias="local_evaluate"
-    )
 
+    class Config:
+        validate_assignment = True
+        populate_by_name = True
 
-ProqsV1 = TypeAdapter(list[ProqV1])
-
-
-class ProqV2(BaseModel):
-    title: str = Field(description="The unique slug describing the question")
-    is_lang_specific: str = Field(
-        description="Whether the question is language specific"
-    )
-    statement: str = Field(description="The problem statement")
-    examples: Optional[str] = Field(
-        description="Examples with sample input and output with explanation"
-    )
-    assumptions: Optional[str] = Field(
-        description="Assumptions/constraints about the problem"
-    )
-    public_testcases: list[TestCases] = Field(description="The public testcases")
-    private_testcases: list[TestCases] = Field(description="The private testcases")
-    solution: Solution = Field(description="The solution")
-    solution_template: str = Field(description="")
-
-    # @computed_field
-    # @cached_property
+    @field_validator("title")
+    @classmethod
+    def remove_duplicates(cls, word):
+        return re.sub(re.compile(r"\s+"), " ", word).strip()
