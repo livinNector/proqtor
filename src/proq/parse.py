@@ -1,4 +1,3 @@
-
 import os 
 import re
 import yaml
@@ -9,7 +8,7 @@ from marko import Markdown
 from md2json import dictify
 
 from .template_utils import get_relative_env
-from .models import ProQ
+from .models import ProQ, ProqSets
 
 
 def clip_extra_lines(text: str) -> str:
@@ -120,3 +119,19 @@ def load_proq_from_file(proq_file)->ProQ:
     proq["Private Test Cases"] = extract_testcases(proq["Private Test Cases"])
     proq.update(yaml_header)
     return ProQ.model_validate(proq)
+
+
+def load_proqsets_from_yaml(yaml_file):
+
+    with open(yaml_file) as f:
+        proq_sets = yaml.safe_load(f)
+
+    for proq_set in proq_sets:
+        for proq in proq_set["content"]:
+            proq["content"] = load_proq_from_file(
+                os.path.join(
+                    os.path.dirname(os.path.abspath(yaml_file)), proq["content"]
+                )
+            ).model_dump()
+    
+    return ProqSets.validate_python(proq_sets)

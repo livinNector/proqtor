@@ -1,3 +1,11 @@
+{%
+set diff_color = {
+"+ ": "rgba(0,255,0,.2)",
+"- ": "rgba(255,0,0,.2)",
+"? ": "rgba(0,0,255,.2)",
+" ": "white",
+}
+%}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -59,41 +67,46 @@
 </head>
 
 <body>
+    {%for unit in proq_sets%}
+    <h1>{{unit.title}}</h1>
 
-    <h1>{{unit_name}}</h1>
-
-    {% for problem in problems %}
+    {% for problem in unit.content %}
+    {% set proq = problem.content%}
     <div class="problem">
         <h2>{{ problem.title }}</h2>
         <div class="prob-statement">
-            {{ problem.statement | gfm}}
+            {{ proq.statement | gfm}}
         </div>
         <div style="display: flex; flex-direction: row; flex-wrap:wrap; gap: 20px;">
             <div style="flex: content;">
                 <h3>Code Template</h3>
                 <pre
-                    class="solution">{%if problem.code.prefix.strip() %}<code class="dim lang-{{problem.lang}}">{{problem.code.prefix|e}}</code>{% endif %}<code class="lang-{{problem.lang}}">{{ problem.code.template | e }}</code>{%if problem.code.suffix.strip() %}<code class="dim lang-{{problem.lang}}">{{problem.code.suffix | e}}</code>{% endif%}</pre>
+                    class="solution">{%if proq.solution.prefix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.prefix|e}}</code>{% endif %}<code class="lang-{{proq.lang}}">{{ proq.solution.template | e }}</code>{%if proq.solution.suffix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.suffix | e}}</code>{% endif%}</pre>
             </div>
             <div style="flex: content;">
                 <h3>Solution</h3>
                 <pre
-                    class="solution">{%if problem.code.prefix.strip() %}<code class="dim lang-{{problem.lang}}">{{problem.code.prefix | e}}</code>{% endif %}<code class="lang-{{problem.lang}}">{{ problem.code.solution | e }}</code>{%if problem.code.suffix.strip() %}<code class="dim lang-{{problem.lang}}">{{problem.code.suffix | e}}</code>{% endif%}</pre>
+                    class="solution">{%if proq.solution.prefix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.prefix | e}}</code>{% endif %}<code class="lang-{{proq.lang}}">{{ proq.solution.solution | e }}</code>{%if proq.solution.suffix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.suffix | e}}</code>{% endif%}</pre>
             </div>
             <div style="flex: content;">
                 <h3>Template - Solution Diff</h3>
                 <pre
-                    class="solution">{%if problem.code.prefix.strip() %}<code class="dim lang-{{problem.lang}}">{{problem.code.prefix | e}}</code>{% endif %}<output style="padding-block:1rem">{{ problem.code.template_solution_diff}}</output>{%if problem.code.suffix.strip() %}<code class="dim lang-{{problem.lang}}">{{problem.code.suffix | e}}</code>{% endif%}</pre>
+                    class="solution">{%if proq.solution.prefix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.prefix | e}}</code>{% endif %}<output style="padding-block:1rem">{%for diff in proq.solution.template_solution_diff%}<span style="background:{{diff_color[diff[:2]]}}">{{diff[2:]}}</span>{%endfor%}</output>{%if proq.solution.suffix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.suffix | e}}</code>{% endif%}</pre>
             
             </div>
         </div>
 
-        {% if problem.code.suffix_invisible %}
+        {% if proq.solution.suffix_invisible%}
         <h3>Invisible Suffix</h3>
-        <pre class="solution"><code>{{problem.code.suffix_invisible | e }}</code></pre>
+        {% if show_hidden_suffix %}
+        <pre class="solution"><code>{{proq.solution.suffix_invisible | e }}</code></pre>
+        {% else %}
+            <p>Invisible Suffix Hidden</p>
+        {% endif %}
         {% endif %}
         <div style="display: flex; flex-direction: row; flex-wrap:wrap; gap: 20px;">
-            {% for groupName, testcaseGroup in [["Public",problem.testcases.public_testcases],
-            ["Private",problem.testcases.private_testcases]]%}
+            {% for groupName, testcaseGroup in [["Public",proq.public_testcases],
+            ["Private",proq.private_testcases]]%}
             <div style="flex: content;">
                 <h3>{{groupName}} Test Cases</h3>
                 <table>
@@ -121,7 +134,7 @@
         </div>
     </div>
     {% endfor %}
-
+{% endfor %}
 </body>
 
 </html>

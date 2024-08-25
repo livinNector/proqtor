@@ -1,12 +1,15 @@
+import re
+import difflib
+
 from pydantic import (
     BaseModel,
+    AliasChoices,
+    TypeAdapter,
     Field,
     computed_field,
-    AliasChoices,
     field_validator,
 )
-from typing import Literal
-import re
+from typing import Literal, Generic, TypeVar
 
 ProgLang = Literal[
     "c", "cpp", "java", "py", "py3", "verilog", "pl", "hs", "zip", "bash", "javascript"
@@ -52,6 +55,15 @@ class Solution(BaseModel):
         """The complete template code with all prefix and suffix attached"""
         return "".join([self.prefix, self.template, self.suffix, self.suffix_invisible])
 
+    @property
+    def template_solution_diff(self):
+        differ = difflib.Differ()
+        differences = differ.compare(
+            self.template.splitlines(keepends=True),
+            self.solution.splitlines(keepends=True),
+        )
+        return list(differences)
+
 
 class ProQ(BaseModel):
     """Pydantic model for a Programming Question (ProQ)"""
@@ -72,3 +84,14 @@ class ProQ(BaseModel):
     @classmethod
     def remove_duplicates(cls, word):
         return re.sub(re.compile(r"\s+"), " ", word).strip()
+
+
+DataT = TypeVar("DataT")
+
+
+class NestedContent(BaseModel, Generic[DataT]):
+    title: str
+    content: list["NestedContent[DataT]"] | DataT
+
+
+ProqSets = TypeAdapter(list[NestedContent[ProQ]])
