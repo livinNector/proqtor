@@ -1,3 +1,5 @@
+
+import os 
 import re
 import yaml
 import argparse
@@ -6,7 +8,7 @@ import shlex
 from marko import Markdown
 from md2json import dictify
 
-from .template_utils import relative_env
+from .template_utils import get_relative_env
 from .models import ProQ
 
 
@@ -109,7 +111,7 @@ def extract_testcases(testcases_dict):
 
 def load_proq_from_file(proq_file)->ProQ:
     """Loads the proq file and returns a Proq"""
-    md_file = relative_env.get_template(proq_file).render()
+    md_file = get_relative_env(proq_file).get_template(os.path.basename(proq_file)).render()
     yaml_header, md_string = md_file.split("---", 2)[1:]
     yaml_header = yaml.safe_load(yaml_header)
     proq = dictify(md_string)

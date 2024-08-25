@@ -7,16 +7,17 @@ package_env = Environment(
 )
 package_env.filters["gfm"] = gfm.convert
 
+def load_relative_to(filename):
+    def inner(template):
+        dir = os.path.dirname(filename)
+        path = os.path.abspath(os.path.join(dir,template))
+        with open(path) as f:
+            return f.read()
+    return inner
 
-def load_relative_to(template):
-    dir = os.path.dirname(template)
-    path = os.path.abspath(os.path.join(dir, template))
-    with open(path) as f:
-        return f.read()
-
-
-relative_env = Environment(
-    loader=FunctionLoader(load_relative_to),
-    autoescape=select_autoescape(),
-    cache_size=0,
-)
+def get_relative_env(filename):
+    return Environment(
+        loader=FunctionLoader(load_relative_to(filename)),
+        autoescape=select_autoescape(),
+        cache_size=0,
+    )
