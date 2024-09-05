@@ -7,6 +7,8 @@ from .template_utils import package_env
 from .parse import load_proqsets_from_yaml
 from .models import ProqSets
 
+OUTPUT_FORMATS = ["json",  "html", "pdf"]
+
 
 async def print_html_to_pdf(html_content, output_pdf_path):
     async with async_playwright() as p:
@@ -24,11 +26,9 @@ def proq_export(yaml_file, output_file=None, format="json", show_hidden_suffix=F
         raise FileNotFoundError(f"{yaml_file} is not a valid file")
 
     if not output_file:
-        assert format in [
-            "json",
-            "html",
-            "pdf",
-        ], "Export format not valid. Supported formats are json and html."
+        assert (
+            format in OUTPUT_FORMATS
+        ), f"Export format not valid. Supported formats are {', '.join(OUTPUT_FORMATS[:-1])} and {OUTPUT_FORMATS[-1]}."
         output_file = ".".join(yaml_file.split(".")[:-1]) + f".{format}"
 
     proq_sets = load_proqsets_from_yaml(yaml_file)
@@ -64,7 +64,7 @@ def conifgure_cli_parser(parser: argparse.ArgumentParser):
         "-f",
         "--format",
         metavar="OUTPUT_FORMAT",
-        choices=["json", "html", "pdf"],
+        choices=OUTPUT_FORMATS,
         default="json",
         help="format of the output file export",
     )
