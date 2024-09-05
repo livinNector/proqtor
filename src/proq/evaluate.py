@@ -2,6 +2,7 @@ import os
 import argparse
 import subprocess
 from collections import namedtuple
+from tempfile import TemporaryDirectory
 from .models import ProQ, TestCase
 from .parse import load_proq_from_file
 
@@ -29,19 +30,18 @@ def build(build_command) -> bool:
     return result.returncode == 0
 
 
-def run_script(run_command, stdin):
+def run_script(run_command: str, stdin: str):
     result = subprocess.run(
         run_command.split(),
-        input=stdin.encode("utf-8"),
+        input=stdin,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
     )
-    return result.stdout.decode("utf-8") + (
-        result.stderr.decode("utf-8") if result.returncode != 0 else ""
-    )
+    return result.stdout
 
 
-def check_testcases(run_command, testcases, verbose=False):
+def check_testcases(run_command: str, testcases: list[TestCase], verbose=False):
     results = []
     for i, testcase in enumerate(testcases, 1):
         actual_output = (
@@ -65,11 +65,10 @@ def check_testcases(run_command, testcases, verbose=False):
                     actual_output,
                     sep="\n",
                 )
-
     return results
 
 
-def evaluate_proq(proq, verbose=False) -> dict[str, ProqChecks]:
+def evaluate_proq(proq: ProQ, verbose=False) -> dict[str, ProqChecks]:
     source_filename = proq.solution.execute_config.source_filename
     build_command = proq.solution.execute_config.build
     run_command = proq.solution.execute_config.run
@@ -127,13 +126,19 @@ def evaluate_proq(proq, verbose=False) -> dict[str, ProqChecks]:
 import os
 import argparse
 
+
 def evaluate_proq_files(files, verbose=True):
     for file_path in files:
         if not os.path.isfile(file_path):
             print(f"{file_path} is not a valid file")
             continue
         print(f"Evaluating file {file_path}")
-        evaluate_proq(load_proq_from_file(file_path), verbose=verbose)
+        proq = load_proq_from_file(file_path)
+        curdir = os.path.abspath(os.curdir)
+        with TemporaryDirectory() as tempdirname:
+            os.chdir(tempdirname)
+            evaluate_proq(proq, verbose=verbose)
+            os.chdir(curdir)
 
 
 def configure_cli_parser(parser: argparse.ArgumentParser):
