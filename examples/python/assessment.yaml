@@ -1,0 +1,12 @@
+title: Python Exam
+content:
+  - title: Section 1
+    content:
+      - title: Problem 1
+        content: problems/check_two_digit_even.md
+      - title: Problem 2
+        content: problems/delete_first_three.md
+  - title: Section 2
+    content:
+      - title: Problem 3
+        content: problems/sum_of_squares_of_keys.md
