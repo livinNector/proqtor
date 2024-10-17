@@ -1,4 +1,4 @@
-import os 
+import os
 import re
 import yaml
 import argparse
@@ -8,7 +8,7 @@ from marko import Markdown
 from md2json import dictify
 
 from .template_utils import get_relative_env
-from .models import ProQ, ProqSets
+from .models import ProQ, NestedContent
 
 
 def clip_extra_lines(text: str) -> str:
@@ -80,9 +80,15 @@ def extract_codeblock_content(text):
 
 def extract_solution(solution_codeblock):
     solution = extract_codeblock_content(solution_codeblock)
-    solution_template = solution.pop('code')
+    solution_template = solution.pop("code")
     code = {}
-    for part in ["prefix", "suffix", "suffix_invisible","invisible_suffix", "template"]:
+    for part in [
+        "prefix",
+        "suffix",
+        "suffix_invisible",
+        "invisible_suffix",
+        "template",
+    ]:
         code[part] = get_tag_content(part, solution_template)
 
     code["solution"] = code["template"]
@@ -94,7 +100,7 @@ def extract_solution(solution_codeblock):
     code["solution"] = strip_tags(
         remove_tag(code["solution"], "los"), ["sol", "solution"]
     )
-    return solution|code
+    return solution | code
 
 
 def extract_testcases(testcases_dict):
@@ -108,9 +114,11 @@ def extract_testcases(testcases_dict):
     ]
 
 
-def load_proq_from_file(proq_file)->ProQ:
+def load_proq_from_file(proq_file) -> ProQ:
     """Loads the proq file and returns a Proq"""
-    md_file = get_relative_env(proq_file).get_template(os.path.basename(proq_file)).render()
+    md_file = (
+        get_relative_env(proq_file).get_template(os.path.basename(proq_file)).render()
+    )
     yaml_header, md_string = md_file.split("---", 2)[1:]
     yaml_header = yaml.safe_load(yaml_header)
     proq = dictify(md_string)
@@ -121,17 +129,25 @@ def load_proq_from_file(proq_file)->ProQ:
     return ProQ.model_validate(proq)
 
 
-def load_proqsets_from_yaml(yaml_file):
-
+def load_nested_proq_from_file(yaml_file) -> NestedContent[ProQ]:
+    """
+    Loads a nested content structure with proqs at leaf nodes.
+    """
     with open(yaml_file) as f:
-        proq_sets = yaml.safe_load(f)
+        nested_proq_files = NestedContent[str|ProQ].model_validate(yaml.safe_load(f))
 
-    for proq_set in proq_sets:
-        for proq in proq_set["content"]:
-            proq["content"] = load_proq_from_file(
+    def load_nested_proq_files(nested_proq_files: NestedContent[str]):
+        """Loads the nested Proqs inplace recursively."""
+        if isinstance(nested_proq_files.content, str):
+            nested_proq_files.content = load_proq_from_file(
                 os.path.join(
-                    os.path.dirname(os.path.abspath(yaml_file)), proq["content"]
+                    os.path.dirname(os.path.abspath(yaml_file)),
+                    nested_proq_files.content,
                 )
-            ).model_dump()
-    
-    return ProqSets.validate_python(proq_sets)
+            )
+        else:
+            for content in nested_proq_files.content:
+                load_nested_proq_files(content)
+
+    load_nested_proq_files(nested_proq_files)
+    return NestedContent[ProQ].model_validate(nested_proq_files.model_dump())

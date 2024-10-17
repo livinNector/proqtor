@@ -6,60 +6,93 @@ set diff_color = {
 " ": "white",
 }
 %}
+
+
+{%macro render_proq(title, proq, depth=1)%}
+<div class="problem">
+    <h{{depth}}>{{ title }}</h{{depth}}>
+    <div class="prob-statement">
+        {{ proq.statement | gfm}}
+    </div>
+    <div style="display: flex; flex-direction: row; flex-wrap:wrap; gap: 20px;">
+        <div style="flex: content;">
+            <h{{depth+1}}>Code Template</h{{depth+1}}>
+            <pre
+                class="solution">{%if proq.solution.prefix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.prefix|e}}</code>{% endif %}<code class="lang-{{proq.lang}}">{{ proq.solution.template | e }}</code>{%if proq.solution.suffix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.suffix | e}}</code>{% endif%}</pre>
+        </div>
+        <div style="flex: content;">
+            <h{{depth+1}}>Solution</h{{depth+1}}>
+            <pre
+                class="solution">{%if proq.solution.prefix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.prefix | e}}</code>{% endif %}<code class="lang-{{proq.lang}}">{{ proq.solution.solution | e }}</code>{%if proq.solution.suffix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.suffix | e}}</code>{% endif%}</pre>
+        </div>
+        <div style="flex: content;">
+            <h{{depth+1}}>Template - Solution Diff</h{{depth+1}}>
+            <pre
+                class="solution">{%if proq.solution.prefix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.prefix | e}}</code>{% endif %}<output style="padding-block:1rem">{%for diff in proq.solution.template_solution_diff%}<span style="background:{{diff_color[diff[:2]]}}">{{diff[2:]}}</span>{%endfor%}</output>{%if proq.solution.suffix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.suffix | e}}</code>{% endif%}</pre>
+
+        </div>
+    </div>
+
+    {% if proq.solution.suffix_invisible%}
+    <h{{depth+1}}>Invisible Suffix</h{{depth+1}}>
+    {% if show_hidden_suffix %}
+    <pre class="solution"><code>{{proq.solution.suffix_invisible | e }}</code></pre>
+    {% else %}
+    <p>Invisible Suffix Hidden</p>
+    {% endif %}
+    {% endif %}
+    <div style="display: flex; flex-direction: row; flex-wrap:wrap; gap: 20px;">
+        {% for groupName, testcaseGroup in [["Public",proq.public_testcases],
+        ["Private",proq.private_testcases]]%}
+        <div style="flex: content;">
+            <h{{depth+1}}>{{groupName}} Test Cases</h{{depth+1}}>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Input</th>
+                        <th>Expected Output</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for testcase in testcaseGroup %}
+                    <tr>
+                        <td>
+                            <pre>{{ testcase.input | e }}</pre>
+                        </td>
+                        <td>
+                            <pre>{{ testcase.output | e }}</pre>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{%endmacro%}
+
+{%macro render_nested_proq(nested_proq, depth=1)%}
+    {%if nested_proq.content is sequence%}
+        <h{{depth}}>{{nested_proq.title}}</h{{depth}}>
+        {%for item in nested_proq.content %}
+            {{render_nested_proq(item,depth+1)}}
+        {%endfor%}
+    {%else %}
+        {{render_proq(nested_proq.title, nested_proq.content,depth)}}
+    {%endif%}
+{%endmacro%}
+
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>Problem Set</title>
+    <title>{{nested_proq.title}}</title>
+    
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.5;
-            padding: 5px;
-        }
-
-        h1 {
-            border-bottom: 2px solid #ccc;
-            padding-bottom: 10px;
-        }
-
-        h2 {
-            margin-top: 30px;
-        }
-
-        table {
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 5px;
-            border: 1px solid #ccc;
-        }
-
-        pre {
-            margin: 0px;
-
-            &.solution {
-                border-radius: 5px;
-                border: thin solid #000;
-                padding: 3px;
-                text-wrap: wrap;
-            }
-
-            code.dim {
-                background: #f4f4f4;
-            }
-        }
-
-        @page {
-            size: A4;
-            margin: .5in;
-        }
-    </style>
-    <style>
-        {% include "./style.css" %}
+        {% include "./export_style.css" %}
     </style>
     {% include "./katex_includes.html" %}
     {% include "./highlightjs_includes.html" %}
@@ -67,74 +100,7 @@ set diff_color = {
 </head>
 
 <body>
-    {%for unit in proq_sets%}
-    <h1>{{unit.title}}</h1>
-
-    {% for problem in unit.content %}
-    {% set proq = problem.content%}
-    <div class="problem">
-        <h2>{{ problem.title }}</h2>
-        <div class="prob-statement">
-            {{ proq.statement | gfm}}
-        </div>
-        <div style="display: flex; flex-direction: row; flex-wrap:wrap; gap: 20px;">
-            <div style="flex: content;">
-                <h3>Code Template</h3>
-                <pre
-                    class="solution">{%if proq.solution.prefix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.prefix|e}}</code>{% endif %}<code class="lang-{{proq.lang}}">{{ proq.solution.template | e }}</code>{%if proq.solution.suffix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.suffix | e}}</code>{% endif%}</pre>
-            </div>
-            <div style="flex: content;">
-                <h3>Solution</h3>
-                <pre
-                    class="solution">{%if proq.solution.prefix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.prefix | e}}</code>{% endif %}<code class="lang-{{proq.lang}}">{{ proq.solution.solution | e }}</code>{%if proq.solution.suffix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.suffix | e}}</code>{% endif%}</pre>
-            </div>
-            <div style="flex: content;">
-                <h3>Template - Solution Diff</h3>
-                <pre
-                    class="solution">{%if proq.solution.prefix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.prefix | e}}</code>{% endif %}<output style="padding-block:1rem">{%for diff in proq.solution.template_solution_diff%}<span style="background:{{diff_color[diff[:2]]}}">{{diff[2:]}}</span>{%endfor%}</output>{%if proq.solution.suffix.strip() %}<code class="dim lang-{{proq.lang}}">{{proq.solution.suffix | e}}</code>{% endif%}</pre>
-            
-            </div>
-        </div>
-
-        {% if proq.solution.suffix_invisible%}
-        <h3>Invisible Suffix</h3>
-        {% if show_hidden_suffix %}
-        <pre class="solution"><code>{{proq.solution.suffix_invisible | e }}</code></pre>
-        {% else %}
-            <p>Invisible Suffix Hidden</p>
-        {% endif %}
-        {% endif %}
-        <div style="display: flex; flex-direction: row; flex-wrap:wrap; gap: 20px;">
-            {% for groupName, testcaseGroup in [["Public",proq.public_testcases],
-            ["Private",proq.private_testcases]]%}
-            <div style="flex: content;">
-                <h3>{{groupName}} Test Cases</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Input</th>
-                            <th>Expected Output</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for testcase in testcaseGroup %}
-                        <tr>
-                            <td>
-                                <pre>{{ testcase.input | e }}</pre>
-                            </td>
-                            <td>
-                                <pre>{{ testcase.output | e }}</pre>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endfor %}
-{% endfor %}
+    {{render_nested_proq(nested_proq)}}
 </body>
 
 </html>
