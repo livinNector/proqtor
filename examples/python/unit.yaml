@@ -6,3 +6,5 @@ content:
     content: problems/delete_first_three.md
   - title: Problem 3
     content: problems/sum_of_squares_of_keys.md
+  - title: Problem 4
+    content: problems/sum_even_indices.md
