@@ -4,7 +4,6 @@ import difflib
 from pydantic import (
     BaseModel,
     AliasChoices,
-    TypeAdapter,
     Field,
     computed_field,
     field_validator,
@@ -92,6 +91,3 @@ DataT = TypeVar("DataT")
 class NestedContent(BaseModel, Generic[DataT]):
     title: str
     content: list["NestedContent[DataT]"] | DataT
-
-
-ProqSets = TypeAdapter(list[NestedContent[ProQ]])
