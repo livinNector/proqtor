@@ -1,13 +1,13 @@
 [project]
 name = "proq"
-version = "0.0.1"
+version = "0.0.2"
 description = "A command-line based tool for authoring programming questions at scale."
 readme = "README.md"
 requires-python = ">=3.7"
 license = {file = "LICENSE.txt"}
 
 authors = [
-  {name = "Livin Nector", email = "livin@study.iitm.ac.in" }
+  {name = "Livin Nector", email = "livinnector2001@gmail.com" }
 ]
 
 dependencies = [

@@ -2,22 +2,20 @@
 
 Proq - A commandline tool for authoring programming questions at scale.
 
+# Terminology
 
-This project is started as `backend_filler` to be used to upload programming questions with seek backend. 
+- ProQ or Proq - short for Programming Question present in a structured markdown template.
+- Proq file - A structured markdown jinja2 template containg the Proq.
+- Nested proq file - An YAML file containing nested structure for creating structured set of proq in multiple levels.
 
-Then also added some functions to support testcase filling in replit.
 
-Now it was made as a stand alone tool for authoring programming questions and evaluating them.
+# The proq commandline
 
-## The proq commandline
+- **`proq`** - The main commandline tool with subcommands for creating, evaluating and exporting programming questions.
 
-- **`proq`** - The main commandline tool with subcommands for creating, evaluating, exporting and publishing programming questions.
-
-### Subcommands
+## Subcommands
 Use `proq subcommand --help` to know more about the subcommand.
 
-- `proq create` - create a markdown template for authoring the programming questions.
-- `proq evaluate` - evaluate the testcases configured using the build and compile process defined with the yaml header.
-- `proq export` - export the parsed markdown as JSON or html
-- `proq upload` - upload the proq to seek.
-
+- `proq create` - create a markdown template (proq files) for authoring the programming questions.
+- `proq evaluate` - evaluate the testcases configured using the build and compile process defined proq files.
+- `proq export` - export a Proq file or a Nested proq file as JSON, html or pdf.
