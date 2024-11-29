@@ -7,9 +7,36 @@ set diff_color = {
 }
 %}
 
+{%macro render_tescases(groupName, depth, testcases)%}
+<div class='no-break' style="flex: content;flex-wrap:wrap;">
+    <h{{depth}}>{{groupName}} Test Cases</h{{depth}}>
+    <table style="width:100%; overflow:hidden;">
+        <thead>
+            <tr>
+                <th>Input</th>
+                <th>Expected Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for testcase in testcases %}
+            <tr>
+                <td>
+                    <pre>{{ testcase.input | e }}</pre>
+                </td>
+                <td>
+                    <pre>{{ testcase.output | e }}</pre>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endmacro %}
+
 {%macro render_proq(title, proq, depth=1)%}
 <div class="problem">
     <h{{depth}}>{{ title }}</h{{depth}}>
+    <p><b>{{proq.title}}</b></p>
     <div class="prob-statement">
         {{ proq.statement | gfm}}
     </div>
@@ -88,32 +115,10 @@ set diff_color = {
     {% endif %}
     {% endif %}
     <div style="display: flex; flex-direction: row; flex-wrap:wrap; gap: 20px;">
-        {% for groupName, testcaseGroup in [["Public",proq.public_testcases],
-        ["Private",proq.private_testcases]]%}
-        <div class='no-break' style="flex: content;">
-            <h{{depth+1}}>{{groupName}} Test Cases</h{{depth+1}}>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Input</th>
-                        <th>Expected Output</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for testcase in testcaseGroup %}
-                    <tr>
-                        <td>
-                            <pre>{{ testcase.input | e }}</pre>
-                        </td>
-                        <td>
-                            <pre>{{ testcase.output | e }}</pre>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endfor %}
+        {{render_tescases('Public', depth+1, proq.public_testcases)}}
+        {%if not hide_private_testcases %}
+        {{render_tescases('Private', depth+1, proq.private_testcases)}}
+        {%endif%}
     </div>
 </div>
 {%endmacro%}

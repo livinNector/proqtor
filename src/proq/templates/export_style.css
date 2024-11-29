@@ -1,6 +1,8 @@
-@page {
-  size: A4;
-  margin: 1cm;
+@media print {
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
 }
 
 body {
@@ -49,8 +51,6 @@ pre {
     background: #f4f4f4;
   }
 }
-
-
 
 .prob-statement {
   font-family: "Roboto", Arial, Helvetica, sans-serif;
