@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import argparse
 import os
+from typing import Literal
 
 from .core import ExecuteConfig
 from .template_utils import package_env
@@ -16,7 +16,23 @@ default_lang_execute_config = {
 }
 
 
-def generate_template(output_file, lang, num_public, num_private):
+def generate_template(
+    output_file: str,
+    lang: Literal["python", "java", "c"] = "python",
+    num_public: int = 5,
+    num_private: int = 5,
+):
+    """Creates an empty proq file template with the given configuation.
+
+    Args:
+        output_file (str): Output file name
+        lang (Literal["python","java","c"]) : Programming language used to
+            create automatic execute configs.
+            Possible values are python, java and c.
+        num_public (int) : Number of public test cases
+        num_private (int) : Number of private test cases
+    """
+    lang = lang.lower().strip()
     if os.path.isfile(output_file):
         raise FileExistsError(f"A file with the name '{output_file}' already exists.")
 
@@ -29,41 +45,3 @@ def generate_template(output_file, lang, num_public, num_private):
     )
     with open(output_file, "w") as f:
         f.write(content)
-
-
-def configure_cli_parser(parser: argparse.ArgumentParser):
-    parser.add_argument(
-        "-o",
-        "--output-file",
-        type=str,
-        help="Output file name",
-        default="proq_template.md",
-    )
-    parser.add_argument(
-        "-l", "--lang", type=str, help="Language of the proq", default="python"
-    )
-    parser.add_argument(
-        "-npu", "--num-public", type=int, help="Number of public test cases", default=5
-    )
-    parser.add_argument(
-        "-npr",
-        "--num-private",
-        type=int,
-        help="Number of private test cases",
-        default=5,
-    )
-    # TODO: implement multi file generation
-    # parser.add_argument(
-    #     "-np", "--num-problems", type=int, help="Number of problems", default=5
-    # )
-    # parser.add_argument(
-    #     "--pattern", type=str, help="Problem numbering pattern", default="Problem {}"
-    # )
-    parser.set_defaults(
-        func=lambda args: generate_template(
-            args.output_file,
-            args.lang,
-            args.num_public,
-            args.num_private,
-        )
-    )
