@@ -1,8 +1,8 @@
-import argparse
 import asyncio
 import os
-
-from playwright.async_api import async_playwright
+import subprocess
+import tempfile
+from typing import Literal
 
 from .core import NestedContent, ProQ, load_nested_proq_from_file
 from .template_utils import package_env
@@ -10,23 +10,64 @@ from .template_utils import package_env
 OUTPUT_FORMATS = ["json", "html", "pdf"]
 
 
-async def print_html_to_pdf(html_content, output_pdf_path):
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(channel="chrome")
-        context = await browser.new_context()
-        page = await context.new_page()
-        await page.set_content(html_content)
-        await page.pdf(path=output_pdf_path, print_background=True)
-        await browser.close()
+async def print_html_to_pdf(html_content, output_file, chrome_path=None):
+    chrome_path = chrome_path or os.environ["CHROME"] or "chrome"
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete_on_close=False, suffix=".html"
+    ) as f:
+        f.write(html_content)
+        f.close()
+        subprocess.run(
+            [
+                chrome_path,
+                f"--print-to-pdf={output_file}",
+                "--headless",
+                "--disable-gpu",
+                "--no-pdf-header-footer",
+                f.name,
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
 
 
-def get_rendered_html(nested_proq, show_hidden_suffix):
+def get_rendered_html(nested_proq, show_hidden_suffix, hide_private_testcases):
     return package_env.get_template("proq_export_template.html.jinja").render(
-        nested_proq=nested_proq, show_hidden_suffix=show_hidden_suffix
+        nested_proq=nested_proq,
+        show_hidden_suffix=show_hidden_suffix,
+        hide_private_testcases=hide_private_testcases,
     )
 
 
-def proq_export(proq_file, output_file=None, format="json", show_hidden_suffix=False):
+def proq_export(
+    proq_file: str | os.PathLike,
+    output_file: str | os.PathLike = None,
+    format: Literal["html", "json", "pdf"] = "html",
+    show_hidden_suffix: bool = False,
+    hide_private_testcases: bool = False,
+):
+    """Export the proq_file or a nested proq config file to the given format.
+
+    If the output file name is not given the output file will have
+    same name as proq file but with the exported extension.
+
+    Supports json, html and pdf formats.
+
+    PDF export uses default chrome installation.
+    It uses "chrome" as the default executable name.
+    Different executable can be configured using CHROME environment variable.
+
+
+    Args:
+        proq_file (str|PathLike) : Name of the proq file.
+        output_file (str) : Name of the output file.
+        format (Literal["html", "json", "pdf"]) : Format to export.
+        show_hidden_suffix (bool) :
+            Whether to expand hidden suffix in HTML or PDF exports.
+        hide_private_testcases (bool):
+            Whether to hide private testcases in HTML or PDF exports.
+
+    """
     if not os.path.isfile(proq_file):
         raise FileNotFoundError(f"File {proq_file} does not exists.")
     if not output_file:
@@ -54,45 +95,23 @@ def proq_export(proq_file, output_file=None, format="json", show_hidden_suffix=F
                 else:
                     f.write(proq.model_dump_json(indent=2))
             case "html":
-                f.write(get_rendered_html(nested_proq, show_hidden_suffix))
+                f.write(
+                    get_rendered_html(
+                        nested_proq,
+                        show_hidden_suffix=show_hidden_suffix,
+                        hide_private_testcases=hide_private_testcases,
+                    )
+                )
             case "pdf":
                 asyncio.run(
                     print_html_to_pdf(
-                        get_rendered_html(nested_proq, show_hidden_suffix), output_file
+                        get_rendered_html(
+                            nested_proq,
+                            show_hidden_suffix=show_hidden_suffix,
+                            hide_private_testcases=hide_private_testcases,
+                        ),
+                        output_file,
                     )
                 )
 
     print(f"Proqs dumped to {output_file}")
-
-
-def conifgure_cli_parser(parser: argparse.ArgumentParser):
-    parser.add_argument(
-        "proq_file", metavar="F", type=str, help="proq file to be exported"
-    )
-    parser.add_argument(
-        "-o",
-        "--output-file",
-        metavar="OUTPUT_FILE",
-        required=False,
-        type=str,
-        help="name of the output file.",
-    )
-    parser.add_argument(
-        "-f",
-        "--format",
-        metavar="OUTPUT_FORMAT",
-        choices=OUTPUT_FORMATS,
-        default="json",
-        help="format of the output file export",
-    )
-    parser.add_argument(
-        "--show-hidden-suffix",
-        action="store_true",
-        help="Show hidden suffix in the render for HTML and PDF",
-        required=False,
-    )
-    parser.set_defaults(
-        func=lambda args: proq_export(
-            args.proq_file, args.output_file, args.format, args.show_hidden_suffix
-        )
-    )
