@@ -103,42 +103,7 @@ class ProQ(BaseModel):
 
     @classmethod
     def from_file(cls, proq_file):
-        """Loads the proq file and returns a Proq.
-
-        A Proq File is a structured markdown-jinja template file with the yaml header
-        and following first level headings.
-            - Problem Statement
-            - Solution
-            - Test Cases
-
-        The jinja environment is a special environment with relative includes.
-        where all the paths are relative to the proq file.
-
-        The "Problem Statement has the statement of the problem.
-
-        The "Solution" has a markdown code block with special html-like tags
-        annotating different parts of the solution including.
-            - <prefix>...</prefix> - The non-editable part at the start of the code.
-            - <template>...</template> - The editable part.
-                It has two sub tags that can be used within.
-                - <solution>...</solution> or <sol>...</sol>
-                    Contains the part which should only be the part of
-                    the solution not the template.
-                - <los>...</los>
-                    Contains the part which should only be the part of
-                    the template not the solution.
-            - <suffix>...</suffix>
-                The non-editable part comes after the template part.
-            - <suffix_invisible>...</suffix_invisible>
-                The non-editable part which is not visible.
-
-        The language part of the code block will have additional
-        execute args for building and running the script.
-
-        The "Test Cases" section will have alternative input and output second level
-        headings with a markdown code block having the input and output.
-
-        """
+        """Loads the proq file and returns a Proq."""
         if not os.path.isfile(proq_file):
             raise FileNotFoundError(f"File {proq_file} does not exists.")
 
