@@ -26,8 +26,8 @@ async def print_html_to_pdf(html_content, output_file, chrome_path=None):
                 "--no-pdf-header-footer",
                 f.name,
             ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
 
 
