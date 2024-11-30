@@ -106,5 +106,3 @@ def extract_testcases(testcases_dict):
         }
         for input, output in zip(testcases_list[::2], testcases_list[1::2])
     ]
-
-

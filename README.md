@@ -2,46 +2,93 @@
 
 Proq - A command line tool for authoring programming questions at scale.
 
-# Terminology
+## In this Package
+- `ProQ` - A pydantic model defining a programming question. This provides an pyhton API that can be used to integrate proq with other code evaluation environments.
+- [**Proq file format**](#proq-file-format) - A Markdown based jinja template format for authoring a proq in a human readable format.
+- [**Proq set config file format**](#proq-set-config-file) - An YAML file that defines a set of proqs with heading outline with references to the proq file.
+- `proq` - A command line tool for working with proq files. It has three subcommands.
+  - `create` - For creating an empty proq file template with the given configuration.
+  - `evaluate` - For evaluating the testcases locally.
+  - `export` - For exporting it to different sharable formats like html, pdf and json.
 
-- ProQ or Proq - short for Programming Question present in a structured markdown template.
-- Proq file - A structured markdown jinja2 template contains the Proq.
-- Nested proq file - An YAML file containing nested structure for creating structured set of proq in multiple levels.
+This library defines a pydantic model for a programming question and a markdown based jinja template format for authoring a proq which can be loaded as the proq model.
 
 
-# The proq command line
+## The proq command line
 
 - **`proq`** - The main command line tool with sub-commands for creating, evaluating and exporting programming questions.
 
-## Subcommands
-Use `proq subcommand --help` to know more about the sub-command.
+### Commands
 
-- `proq create` - create a markdown template (proq files) for authoring the programming questions.
+Use `proq [command] --help` to know more about the sub-command.
+
+- `proq create` - create a empty proq file templates for authoring the programming questions.
 - `proq evaluate` - evaluate the test cases configured using the build and compile process defined proq files.
-- `proq export` - export a Proq file or a Nested proq file as JSON, html or pdf.
+- `proq export` - export a **proq file** or a **proq set config file** as JSON, html or pdf.
 
-## Quick Start
+### Examples
 
-### Creating a proq
-```
-proq create -npu 3 -npr 3 --lang c sample.md
-```
+#### Creating a proq
 
-### Evaluating a proq
-```
-proq evaluate sample.md
-```
+1. Default template (uses python).  
+   ```bash
+   proq create sample.md
+   ```
+2. Specifying number of public and private testcases.  
+   ```bash
+   proq create --num-public 3 --num-private 5 sample.md
+   ```
+3. Specifying the programming language. Currently `python`, `java` and `c` are supported. For other languages the execute config have to be configured manually ([see here](#code-block-header---execute-config)).  
+   ```bash
+   proq create --lang c sample.md
+   ```
 
-### Exporting a proq
-```
-proq export sample.md -f pdf
-```
+#### Evaluating a proq
 
+1. Evaluating a single proq file.  
+   ```
+   proq evaluate sample.md
+   ```
+
+2. Evaluating multiple files.
+   ```
+   proq evaluate sample1.md sample2.md sample3.md
+   ```
+   This evaluates the given three files.
+
+3. Evaluating multiple files using glob patterns and brace expansions.
+   ```
+   proq evaluate sample*.md 
+   proq evaluate sample{1..4}.md
+   proq evaluate sample{1,3}.md
+   ```
+   This evaluates the files that are expanded as the result.
+
+#### Exporting a proq
+
+`proq export` supports exporting to `json`, `html` and `pdf` formats. PDF conversion uses the systems chrome executable. It uses `'chrome'` as the default executable name. To set a different executable name configure `CHROME` environment variable.
+
+1. Specifying only the format. Uses the same file name with the extension of the export format. 
+   ```
+   proq export sample.md -f pdf
+   ```
+   This will create a file called sample.pdf  
+
+2. With different chrome executable.
+   ```
+   export CHROME=google-chrome-stable
+   proq export sample.md -f pdf
+   ```
+3. Hiding Private testcases in the HTML or PDF output.
+   ```
+   proq export sample.md -f html --hide-private-testcases
+   ```
 
 ## Proq File Format
 
 The **Proq File Format** is a structured way to define coding problems, solutions, and test cases using a combination of Markdown-based Jinja templates. This format ensures clarity, flexibility, and compatibility with auto-grading environments. Each file is divided into well-defined sections with specific purposes and annotations.
 
+The proq file is a jinja template which is rendered before loaded.
 
 ### File Structure
 
@@ -54,7 +101,7 @@ A Proq file is composed of three main sections:
 ### 1. YAML Header
 The YAML header contains metadata about the problem, such as its title and tags. The `title` and `tags` is defined in the pydantic model. But also support additional tags.
 
-**Example**:
+**Example**
 ```yaml
 ---
 title: Delete first three elements of a list
@@ -62,10 +109,8 @@ tags: ['list','list manipulation','slicing']
 ---
 ```
 
-
 ### 2. Problem Statement
 This section describes the coding task to be solved, along with examples to clarify the requirements. 
-
 
 ### 3. Solution
 The solution is defined in a Markdown code block and annotated with special HTML-like tags to structure the code into editable and non-editable parts.
@@ -73,24 +118,29 @@ The solution is defined in a Markdown code block and annotated with special HTML
 #### Tag Overview:
 - `<prefix>...</prefix>`(Optional):  
   Non-editable code that appears before the main solution.
-- `<template>...</template>`:  
-  Editable code. Can include:
-  - `<sol>...</sol>`: Parts only present in the solution.
-  - `<los>...</los>`: Parts only present in the template.
+- `<template>...</template>`(Required):  
+  The template includes the parts of the code that common in both solution and the editable template. A template can have multiple `<sol>` and `<los>` parts.
+  - `<sol>...</sol>`: Marks the content that is only present in the solution.
+  - `<los>...</los>`: Marks the content that is only present in the template.
 - `<suffix>...</suffix>`(Optional):  
   Non-editable code after the solution.
 - `<suffix_invisible>...</suffix_invisible>`(Optional):  
   Non-visible code for additional functionality or testing.
 
-#### Code Block Header
+#### Code Block Header - Execute Config
 
-The language specified in the start of the solution code block is considered as the coding language. In addition to the language. The first line also has some arguments that resemble command line arguments of the format `FILE_NAME -r RUN_COMMAND -b BUILD_COMMAND`. This is used for local evaluation of the programming assignments.
+The language specified in the start of the solution code block is considered as the coding language. In addition to the language. The first line also has some arguments that resemble command line arguments of the below format.
+```
+FILE_NAME -r 'RUN_COMMAND' -b 'BUILD_COMMAND'
+```
+
+This is used for local evaluation of the programming assignments.
 
 **Example**:
 ````markdown
 # Solution
 
-```py3 test.py -r 'python test.py'
+```python test.py -r 'python test.py'
 <template>
 def delete_first_three(l: list) -> None:
     '''
@@ -110,8 +160,6 @@ def delete_first_three(l: list) -> None:
 </suffix_invisible>
 ```
 ````
-
-
 
 ### 4. Test Cases
 
@@ -144,3 +192,19 @@ Some hidden output
 ```
 ````
 
+## Proq Set Config File
+
+A proq set config file can be used to define a set of proqs under different sections and subsections in a yaml having the following structure.
+
+```python
+class NestedProq:
+  title: str 
+  content: NestedProq | str # relative path to the proq file
+```
+
+### Example
+See [assessment.yaml](examples/python/assessment.yaml) and [unit.yaml](examples/python/unit.yaml)
+
+## ProQ Python API
+
+See [core.py](src/proq/core.py) and [prog_langs.py](src/proq/prog_langs.py) for proq related classess and functions.

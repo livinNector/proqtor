@@ -15,14 +15,16 @@ alias_map = {runtime["language"]: runtime["language"] for runtime in runtimes} |
 }
 alias_codes = sorted(list(alias_map.keys()))
 
+
 class InvalidLangAliasError(ValueError):
     pass
+
 
 def get_lang_code(alias):
     """Get the lang code from alias."""
     if alias not in alias_map:
         raise InvalidLangAliasError(
-            f'Alias not recognized. Alias should be one of {alias_codes}'
+            f"Alias not recognized. Alias should be one of {alias_codes}"
         )
     return alias_map[alias]
 
