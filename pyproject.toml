@@ -1,6 +1,6 @@
 [project]
 name = "proq"
-version = "0.0.5"
+version = "1.0.0"
 description = "A command-line based tool for authoring programming questions at scale."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -13,7 +13,6 @@ dependencies = [
   "pydantic",
   "marko",
   "Jinja2",
-  "playwright",
   "strenum>=0.4.15",
   "termcolor>=2.5.0",
 ]
