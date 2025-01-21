@@ -16,9 +16,6 @@ is_two_digit_even(21) # False, two digit but not even
 # Solution
 
 ```py3 test.py -r 'python test.py'
-<prefix>
-# some prefix   
-</prefix>
 <template>
 def is_two_digit_even(n: int) -> bool:
     '''
@@ -31,11 +28,7 @@ def is_two_digit_even(n: int) -> bool:
     '''
     <los>...</los>
     <sol>return 10 <= n <= 99 and n % 2 == 0</sol>
-    test = <los>...</los><sol>'test'</sol> #tests
 </template>
-<suffix>
-# some suffix
-</suffix>
 <suffix_invisible>
 {% include '../function_type_and_modify_check_suffix.py.jinja' %}
 </suffix_invisible>
