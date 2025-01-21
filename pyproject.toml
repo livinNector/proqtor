@@ -19,6 +19,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+proqgen = [
+    "groq>=0.11.0",
+    "instructor>=1.6.3",
+    "python-dotenv>=1.0.1",
+    "requests>=2.32.3",
+]
 
 [project.urls]
 [project.scripts]
@@ -34,7 +40,10 @@ build-backend = "setuptools.build_meta"
 "proq.data" = ["*"]
 
 [dependency-groups]
-dev = ["ruff>=0.7.2"]
+dev = [
+    "ipykernel>=6.29.5",
+    "ruff>=0.7.2",
+]
 
 [tool.ruff]
 extend-include = ["*.ipynb"]

@@ -1,13 +1,13 @@
-{%
+{%-
 set diff_color = {
 "+ ": "rgba(0,255,0,.2)",
 "- ": "rgba(255,0,0,.2)",
 "? ": "rgba(0,0,255,.2)",
-" ": "white",
+"  ": "none",
 }
-%}
+-%}
 
-{%macro render_tescases(groupName, depth, testcases)%}
+{%-macro render_tescases(groupName, depth, testcases)%}
 <div class='no-break' style="flex: content;flex-wrap:wrap;">
     <h{{depth}}>{{groupName}} Test Cases</h{{depth}}>
     <table style="width:100%; overflow:hidden;">
@@ -31,9 +31,9 @@ set diff_color = {
         </tbody>
     </table>
 </div>
-{% endmacro %}
+{% endmacro -%}
 
-{%macro render_proq(title, proq, depth=1)%}
+{%-macro render_proq(title, proq, depth=1)%}
 <div class="problem">
     <h{{depth}}>{{ title }}</h{{depth}}>
     <div class="no-break">
@@ -125,9 +125,9 @@ set diff_color = {
 </div>
 
 <hr style="margin: 2rem 0 1rem;">
-{%endmacro%}
+{%endmacro-%}
 
-{%macro render_nested_proq(nested_proq, depth=1)%}
+{%-macro render_nested_proq(nested_proq, depth=1)%}
 {%if nested_proq.content is sequence%}
 <h{{depth}}>{{nested_proq.title}}</h{{depth}}>
 {%for item in nested_proq.content %}
@@ -136,26 +136,21 @@ set diff_color = {
 {%else %}
 {{render_proq(nested_proq.title, nested_proq.content,depth)}}
 {%endif%}
-{%endmacro%}
+{%endmacro-%}
 
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>{{nested_proq.title}}</title>
-
     <style>
         {% include "./export_style.css" %}
     </style>
     {% include "./katex_includes.html" %}
     {% include "./highlightjs_includes.html" %}
-
 </head>
-
 <body>
     {{render_nested_proq(nested_proq)}}
 </body>
-
 </html>
