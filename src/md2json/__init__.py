@@ -1,3 +1,3 @@
-from .md2json import dictify, undictify
+from .md2json import dictify, fold_level, undictify
 
-__all__ = [dictify, undictify]
+__all__ = [dictify, undictify, fold_level]
