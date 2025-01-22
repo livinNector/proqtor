@@ -1,0 +1,53 @@
+{%-macro render_test_cases(test_cases)%}
+{%-for test_case in test_cases%}
+## Input {{loop.index}}
+
+```
+{{test_case.input-}}
+```
+
+## Output {{loop.index}}
+
+```
+{{test_case.output-}}
+```
+{%endfor-%}
+{%endmacro-%}
+---
+title: {{proq.title}}
+{%-if proq.tags%}tags: {{proq.tags}}{%endif%}
+is_rendered: True
+---
+
+# Problem Statement
+
+{{proq.statement}}
+
+# Solution
+{%set solution = proq.solution-%}
+{%set execute_config = proq.solution.execute_config-%}
+```{{solution.lang}} {{execute_config.source_filename}} {%if execute_config.build%}-b '{{execute_config.build}}'{%endif%} {%if execute_config.run%}-r '{{execute_config.run}}'{%endif%}
+{%if solution.prefix.strip()-%}
+<prefix>
+{{-solution.prefix-}}
+</prefix>
+{%endif-%}
+<template>
+{{-solution.template_solution_merge-}}
+</template>
+{%if solution.suffix.strip()-%}
+<suffix>
+{{-solution.suffix-}}
+</suffix>
+{%endif-%}
+{%if solution.suffix_invisible.strip()-%}
+<suffix_invisible>
+{{-solution.suffix_invisible-}}
+</suffix_invisible>
+{%endif-%}
+```
+
+# Public Test Cases
+{{render_test_cases(proq.public_test_cases)}}
+# Private Test Cases
+{{render_test_cases(proq.private_test_cases)}}

@@ -22,7 +22,7 @@ def get_tag_content(tag: str, html: str) -> str:
         Inner html if tag found else empty string
     """
     content = re.findall(f"<{re.escape(tag)}>(.*?)</{re.escape(tag)}>", html, re.DOTALL)
-    content = clip_extra_lines(content[0]) if content else ""
+    content = content[0]if content and content[0].strip() else ""
     return content
 
 
@@ -97,8 +97,8 @@ def extract_solution(solution_codeblock):
     return solution | code
 
 
-def extract_testcases(testcases_dict):
-    testcases_list = list(testcases_dict.values())
+def extract_testcases(testcase_blocks:tuple):
+    testcases_list = [x[1] for x in testcase_blocks]
     return [
         {
             "input": extract_codeblock_content(input)["code"],

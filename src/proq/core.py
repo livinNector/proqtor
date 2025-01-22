@@ -1,64 +1,23 @@
-import difflib
 import os
 import re
+import warnings
 from typing import Generic, TypeVar
 
 import yaml
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 import md2json
 
+from .core_components import Solution, TestCase
+from .lang_defaults import default_execute_config, default_solution
 from .parse import extract_solution, extract_testcases
 from .prog_langs import ProgLang
-from .template_utils import get_relative_env
+from .template_utils import get_relative_env, package_env
 
-
-class TestCase(BaseModel):
-    input: str
-    output: str
-
-
-class ExecuteConfig(BaseModel):
-    source_filename: str | None = ""
-    build: str | None = ""
-    run: str | None = ""
-
-
-class Solution(BaseModel):
-    prefix: str = Field(default="", description="The prefix of the solution")
-    template: str = Field(
-        default="", description="Template code between prefix and suffix"
-    )
-    solution: str = Field(
-        default="", description="The solution code to replace template"
-    )
-    suffix: str = Field(default="", description="The suffix of the solution")
-    suffix_invisible: str = Field(
-        default="",
-        validation_alias=AliasChoices("suffix_invisible", "invisible_suffix"),
-        description="The invisible part of the suffix that comes after suffix",
-    )
-    lang: ProgLang = Field(default="python")
-    execute_config: ExecuteConfig | None = Field(default_factory=ExecuteConfig)
-
-    @property
-    def solution_code(self):
-        """The complete solution code with all prefix and suffix attached."""
-        return "".join([self.prefix, self.solution, self.suffix, self.suffix_invisible])
-
-    @property
-    def template_code(self):
-        """The complete template code with all prefix and suffix attached."""
-        return "".join([self.prefix, self.template, self.suffix, self.suffix_invisible])
-
-    @property
-    def template_solution_diff(self):
-        differ = difflib.Differ()
-        differences = differ.compare(
-            self.template.splitlines(keepends=True),
-            self.solution.splitlines(keepends=True),
-        )
-        return list(differences)
+PROBLEM_STATEMENT = "Problem Statement"
+PUBLIC_TEST_CASES = "Public Test Cases"
+PRIVATE_TEST_CASES = "Private Test Cases"
+SOLUTION = "Solution"
 
 
 class ProQ(BaseModel):
@@ -71,16 +30,33 @@ class ProQ(BaseModel):
     )
 
     statement: str = Field(
-        validation_alias="Problem Statement",
+        validation_alias=PROBLEM_STATEMENT,
         description="The problem statement with example and explanation",
     )
-    public_testcases: list[TestCase] = Field(validation_alias="Public Test Cases")
-    private_testcases: list[TestCase] = Field(validation_alias="Private Test Cases")
-    solution: Solution = Field(validation_alias="Solution", description="The solution")
+    public_test_cases: list[TestCase] = Field(validation_alias=PUBLIC_TEST_CASES)
+    private_test_cases: list[TestCase] = Field(validation_alias=PRIVATE_TEST_CASES)
+    solution: Solution = Field(validation_alias=SOLUTION, description="The Solution")
 
     model_config = ConfigDict(
         validate_assignment=True, populate_by_name=True, extra="allow"
     )
+
+    @property
+    def public_testcases(self):
+        warnings.warn(
+            "public_testcases is deprecated, use public_test_cases instead",
+            DeprecationWarning,stacklevel=2
+        )
+
+        return self.public_test_cases
+
+    @property
+    def private_testcases(self):
+        warnings.warn(
+            "private_testcases is deprecated, use private_test_cases instead",
+            DeprecationWarning,stacklevel=2
+        )
+        return self.private_test_cases
 
     @field_validator("title")
     @classmethod
@@ -89,15 +65,17 @@ class ProQ(BaseModel):
         return re.sub(re.compile(r"\s+"), " ", word).strip()
 
     @classmethod
-    def default_proq(cls):
+    def default_proq(cls, lang: ProgLang = "python", n_public=1, n_private=1):
         return cls(
             title="Sample Title",
             statement="Sample Problem statment",
-            public_testcases=[TestCase(input="a", output="a")],
-            private_testcases=[TestCase(input="a", output="a")],
+            public_test_cases=[TestCase(input="\n", output="\n")] * n_public,
+            private_test_cases=[TestCase(input="\n", output="\n")] * n_private,
             solution=Solution(
-                solution="print(input())",
-                lang="python",
+                solution=default_solution[lang],
+                template=default_solution[lang],
+                lang=lang,
+                execute_config=default_execute_config[lang],
             ),
         )
 
@@ -107,24 +85,52 @@ class ProQ(BaseModel):
         if not os.path.isfile(proq_file):
             raise FileNotFoundError(f"File {proq_file} does not exists.")
 
-        md_file = (
-            get_relative_env(proq_file)
-            .get_template(os.path.basename(proq_file))
-            .render()
-        )
+        with open(proq_file) as f:
+            md_file = f.read()
         yaml_header, md_string = md_file.split("---", 2)[1:]
         yaml_header = yaml.safe_load(yaml_header)
-        proq = md2json.dictify(md_string)
-        if isinstance(proq["Problem Statement"], dict):
-            proq["Problem Statement"] = md2json.undictify(
-                proq["Problem Statement"], level=2
+        is_rendered = yaml_header.pop("is_rendered", False)
+
+        if not is_rendered:
+            env = get_relative_env(proq_file)
+            md_string = env.from_string(md_string).render()
+        proq = {k.title(): v for k, v in md2json.fold_level(md_string, level=1).items()}
+
+        missing_headings = []
+        for heading in [
+            PROBLEM_STATEMENT,
+            SOLUTION,
+            PUBLIC_TEST_CASES,
+            PRIVATE_TEST_CASES,
+        ]:
+            if heading not in proq:
+                missing_headings.append(heading)
+        if missing_headings:
+            many = len(missing_headings) > 1
+            raise ValueError(
+                f"The following required heading{'s' if many else ''} "
+                f"{'are' if many else 'is'} missing - "
+                + ((",".join(missing_headings[:-1]) + " and ") if many else "")
+                + missing_headings[-1],
             )
 
-        proq["Solution"] = extract_solution(proq["Solution"])
-        proq["Public Test Cases"] = extract_testcases(proq["Public Test Cases"])
-        proq["Private Test Cases"] = extract_testcases(proq["Private Test Cases"])
+        proq[PUBLIC_TEST_CASES] = md2json.fold_level(
+            proq[PUBLIC_TEST_CASES], level=2, return_type="list"
+        )
+        proq[PRIVATE_TEST_CASES] = md2json.fold_level(
+            proq[PRIVATE_TEST_CASES], level=2, return_type="list"
+        )
+        proq[PROBLEM_STATEMENT] = proq[PROBLEM_STATEMENT].strip()
+        proq[SOLUTION] = extract_solution(proq[SOLUTION])
+        proq[PUBLIC_TEST_CASES] = extract_testcases(proq[PUBLIC_TEST_CASES])
+        proq[PRIVATE_TEST_CASES] = extract_testcases(proq[PRIVATE_TEST_CASES])
         proq.update(yaml_header)
         return cls.model_validate(proq)
+
+    def to_file(self, file_name):
+        template = package_env.get_template("proq_template.md.jinja")
+        with open(file_name, "w") as f:
+            f.write(template.render(proq=self))
 
 
 DataT = TypeVar("DataT")
