@@ -4,8 +4,8 @@ import subprocess
 import tempfile
 from typing import Literal
 
-from .core import NestedContent, ProQ, load_nested_proq_from_file
-from .template_utils import package_env
+from proq.core import NestedContent, ProQ, load_nested_proq_from_file
+from proq.template_utils import package_env
 
 OUTPUT_FORMATS = ["json", "html", "pdf"]
 

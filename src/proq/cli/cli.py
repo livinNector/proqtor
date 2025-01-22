@@ -3,8 +3,9 @@ from typing import Literal
 
 import fire
 
+from proq.core import ProQ
+
 from . import evaluate, export
-from .core import ProQ
 
 
 class ProqCli:
