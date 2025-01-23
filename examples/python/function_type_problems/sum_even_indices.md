@@ -28,21 +28,17 @@ The elements at even positions are 1, 3 and 5. Their sum is 9.
 
 # Solution
 ```py test.py -r 'python test.py' 
-<prefix>
 def sum_even_indices(l:int) -> int:
     '''
     Return the sum of numbers in 
     even indices of the list.
     '''
-</prefix>
 <template>
     return <sol>sum(l[::2])</sol><los>...</los>
 </template>
-<suffix>
 # Driver code
 l = list(map(int, input().split(',')))
 print(sum_even_indices(l))
-</suffix>
 ```
 
 # Public Test Cases

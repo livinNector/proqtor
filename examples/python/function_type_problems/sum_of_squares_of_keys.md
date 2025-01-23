@@ -42,7 +42,6 @@ def sum_of_squares(d: dict, k1: str, k2: str) -> int:
 </template>
 <suffix_invisible>
 {% include '../function_type_and_modify_check_suffix.py.jinja' %}
-</suffix_invisible>
 ```
 
 # Public Test Cases
