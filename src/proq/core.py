@@ -9,7 +9,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 import md2json
 
 from .core_components import Solution, TestCase
-from .lang_defaults import default_execute_config, default_solution
 from .parse import extract_solution, extract_testcases
 from .prog_langs import ProgLang
 from .template_utils import get_relative_env, package_env
@@ -45,7 +44,8 @@ class ProQ(BaseModel):
     def public_testcases(self):
         warnings.warn(
             "public_testcases is deprecated, use public_test_cases instead",
-            DeprecationWarning,stacklevel=2
+            DeprecationWarning,
+            stacklevel=2,
         )
 
         return self.public_test_cases
@@ -54,7 +54,8 @@ class ProQ(BaseModel):
     def private_testcases(self):
         warnings.warn(
             "private_testcases is deprecated, use private_test_cases instead",
-            DeprecationWarning,stacklevel=2
+            DeprecationWarning,
+            stacklevel=2,
         )
         return self.private_test_cases
 
@@ -71,12 +72,7 @@ class ProQ(BaseModel):
             statement="Sample Problem statment",
             public_test_cases=[TestCase(input="\n", output="\n")] * n_public,
             private_test_cases=[TestCase(input="\n", output="\n")] * n_private,
-            solution=Solution(
-                solution=default_solution[lang],
-                template=default_solution[lang],
-                lang=lang,
-                execute_config=default_execute_config[lang],
-            ),
+            solution=Solution.from_default(lang),
         )
 
     @classmethod

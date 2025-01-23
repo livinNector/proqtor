@@ -77,7 +77,7 @@ def extract_codeblock_content(text):
 
 def extract_code_parts(code):
     code_parts = re.match(
-        r"(?P<prefix>.*)<template>(?P<proq_template>.*)</template>(?P<suffix>.*)",
+        r"(?P<prefix>.*)<template>(?P<tagged_template>.*)</template>(?P<suffix>.*)",
         code,
         re.DOTALL,
     ).groupdict()
