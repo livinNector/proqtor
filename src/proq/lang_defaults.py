@@ -1,16 +1,16 @@
-from .core_components import ExecuteConfig
+from importlib.resources import files
+
+from .core_components import Solution
 from .prog_langs import ProgLang
 
-default_execute_config: dict[ProgLang, ExecuteConfig] = {
-    "python": ExecuteConfig(source_filename="test.py", run="python test.py"),
-    "java": ExecuteConfig(source_filename="Test.java", run="java Test.java"),
-    "c": ExecuteConfig(
-        source_filename="test.c", build="gcc test.c -o test", run="./test"
-    ),
-}
+lang_default_files = files("proq.templates.lang_defaults")
 
-default_solution: dict[ProgLang, str] = {
-    "python": "\n",
-    "c": "\nint main(){}\n",
-    "java": "\npublic class Main{public static void main(String[] args) {}}\n",
+
+def get_lang_block(lang):
+    return lang_default_files.joinpath(f"{lang}.md").read_text("utf-8")
+
+
+default_solution: dict[ProgLang, Solution] = {
+    lang: Solution.from_code_block(get_lang_block(lang))
+    for lang in ["python", "java", "c"]
 }
