@@ -69,6 +69,7 @@ class ProQ(BaseModel):
     def default_proq(cls, lang: ProgLang = "python", n_public=1, n_private=1):
         return cls(
             title="Sample Title",
+            tags=["sample tag 1", "sample tag 2"],
             statement="Sample Problem statment",
             public_test_cases=[TestCase(input="\n", output="\n")] * n_public,
             private_test_cases=[TestCase(input="\n", output="\n")] * n_private,
@@ -85,11 +86,9 @@ class ProQ(BaseModel):
             md_file = f.read()
         yaml_header, md_string = md_file.split("---", 2)[1:]
         yaml_header = yaml.safe_load(yaml_header)
-        is_rendered = yaml_header.pop("is_rendered", False)
 
-        if not is_rendered:
-            env = get_relative_env(proq_file)
-            md_string = env.from_string(md_string).render()
+        env = get_relative_env(proq_file)
+        md_string = env.from_string(md_string).render()
         proq = {k.title(): v for k, v in md2json.fold_level(md_string, level=1).items()}
 
         missing_headings = []

@@ -15,8 +15,9 @@
 {%endmacro-%}
 ---
 title: {{proq.title}}
-{%-if proq.tags%}tags: {{proq.tags}}{%endif%}
-is_rendered: True
+{%if proq.tags -%}
+tags: [{{proq.tags | join(', ')}}]
+{%endif-%}
 ---
 
 # Problem Statement
