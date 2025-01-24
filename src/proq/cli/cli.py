@@ -24,6 +24,7 @@ class ProqCli:
         lang: Literal["python", "java", "c"] = "python",
         n_public: int = 5,
         n_private: int = 5,
+        force: bool = False,
     ):
         """Creates an empty proq file template with the given configuation.
 
@@ -34,8 +35,9 @@ class ProqCli:
                 Possible values are python, java and c.
             n_public (int) : Number of public test cases
             n_private (int) : Number of private test cases
+            force (bool) : Overwrite file if exists
         """
-        if os.path.isfile(output_file):
+        if not force and os.path.isfile(output_file):
             raise FileExistsError(
                 f"A file with the name '{output_file}' already exists."
             )
