@@ -28,7 +28,7 @@ The elements at even positions are 1, 3 and 5. Their sum is 9.
 
 # Solution
 
-```python test.py  -r 'python test.py'
+```python test.py -r 'python test.py'
 def sum_even_indices(l:int) -> int:
     '''
     Return the sum of numbers in 

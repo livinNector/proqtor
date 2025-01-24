@@ -17,7 +17,7 @@ Second case: The key 'e' is not present in the dict, so the result is `0`.
 
 # Solution
 
-```python test.py  -r 'python test.py'
+```python test.py -r 'python test.py'
 <template>
 def sum_of_squares(d: dict, k1: str, k2: str) -> int:
     '''

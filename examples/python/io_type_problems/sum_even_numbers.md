@@ -11,7 +11,7 @@ Assume the numbers are non-negative integers.
 
 # Solution
 
-```python test.py  -r 'python test.py'
+```python test.py -r 'python test.py'
 <template>
 <sol>
 nums = list(map(int, input().split()))

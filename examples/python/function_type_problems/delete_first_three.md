@@ -14,7 +14,7 @@ After deleting the first three elements, the list becomes `[4, 5]`.
 
 # Solution
 
-```python test.py  -r 'python test.py'
+```python test.py -r 'python test.py'
 <template>
 def delete_first_three(l: list) -> None:
     '''

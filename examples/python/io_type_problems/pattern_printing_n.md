@@ -52,7 +52,7 @@ Given an integer `n` (where `n > 0`), print an "N" shaped pattern with `n` rows.
 
 # Solution
 
-```python test.py  -r 'python test.py'
+```python test.py -r 'python test.py'
 <template>
 <sol>
 n = int(input())
