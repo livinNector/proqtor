@@ -1,5 +1,6 @@
 import difflib
 import os
+from typing import Literal
 
 from termcolor import colored, cprint
 
@@ -36,16 +37,21 @@ def color_diff(old_text, new_text):
     print()
 
 
-def print_failed_test_cases(test_case_results: list[TestCaseResult], diff_mode=False):
+def print_failed_test_cases(
+    test_case_results: list[TestCaseResult],
+    test_case_type: Literal["public", "private"] = "private",
+    diff_mode=False,
+):
+    test_case_type = test_case_type.title()
     for i, result in enumerate(test_case_results, 1):
         if not result.passed:
-            cprint(f"Test case {i}: Failed", "red", attrs=["bold"])
+            cprint(f"{test_case_type} Test Case {i}: Failed", "red", attrs=["bold"])
             cprint("Input:", "cyan", attrs=["bold"])
             print(result.input.strip())
             if not diff_mode:
-                cprint("Expected output:", "cyan", attrs=["bold"])
+                cprint("Expected Output:", "cyan", attrs=["bold"])
                 print(result.expected_output)
-                cprint("Actual output:", "cyan",attrs=["bold"])
+                cprint("Actual Output:", "cyan", attrs=["bold"])
                 print(result.actual_output or "{{NO OUPUT}}")
             else:
                 cprint("Expected - Actual Diff:", "cyan", attrs=["bold"])
@@ -64,7 +70,7 @@ def evaluate_proq(proq: ProQ, verbose=False, diff_mode=False) -> ProqCheck:
     n_private = len(proq.private_testcases)
 
     if verbose:
-        print("Title:", colored(proq.title, attrs=["bold"]))
+        print("Title:", colored(proq.title, "cyan", attrs=["bold"]))
 
     # Test solution with public and private test cases
     try:
@@ -85,12 +91,20 @@ def evaluate_proq(proq: ProQ, verbose=False, diff_mode=False) -> ProqCheck:
         public_passed = count_passed(test_case_results[:n_public])
         if public_passed < n_public:
             cprint("Public Test Cases:", attrs=["bold"])
-            print_failed_test_cases(test_case_results[:n_public], diff_mode=diff_mode)
+            print_failed_test_cases(
+                test_case_results[:n_public],
+                test_case_type="public",
+                diff_mode=diff_mode,
+            )
         private_passed = count_passed(test_case_results[n_public:])
         if private_passed < n_private:
             cprint("Private Test Cases:", attrs=["bold"])
-            print_failed_test_cases(test_case_results[n_public:], diff_mode=diff_mode)
-        cprint("Solution check: ", attrs=["bold"], end="")
+            print_failed_test_cases(
+                test_case_results[n_public:],
+                test_case_type="private",
+                diff_mode=diff_mode,
+            )
+        cprint("Solution Check: ", attrs=["bold"], end="")
         cprint(
             f"{public_passed}/{n_public} public test cases passed",
             "red" if public_passed < n_public else "green",
@@ -116,7 +130,7 @@ def evaluate_proq(proq: ProQ, verbose=False, diff_mode=False) -> ProqCheck:
     except BuildFailedError:
         if verbose:
             print(
-                colored("Template check:", attrs=["bold"]),
+                colored("Template Check:", attrs=["bold"]),
                 colored("passed - build failed", color="green"),
             )
         return ProqCheck(solution_check=True, template_check=True)
@@ -176,7 +190,7 @@ def evaluate_proq_files(*files: str | os.PathLike, verbose=False, diff_mode=Fals
         if not os.path.isfile(file_path):
             print(f"{file_path} is not a valid file")
             continue
-        print(f"Evaluating file {file_path}")
+        print(f"Evaluating {file_path}")
         proq = ProQ.from_file(file_path)
         result = evaluate_proq(proq, verbose=verbose, diff_mode=diff_mode)
         if verbose:
