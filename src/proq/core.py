@@ -1,7 +1,7 @@
 import os
 import re
 import warnings
-from typing import Generic, TypeVar
+from typing import Generic, Self, TypeVar
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 import md2json
 
 from .core_components import Solution, TestCase
+from .evaluate_utils import get_test_case_results
 from .parse import extract_solution, extract_testcases
 from .prog_langs import ProgLang
 from .template_utils import get_relative_env, package_env
@@ -77,7 +78,7 @@ class ProQ(BaseModel):
         )
 
     @classmethod
-    def from_file(cls, proq_file):
+    def from_file(cls, proq_file, render_template=True):
         """Loads the proq file and returns a Proq."""
         if not os.path.isfile(proq_file):
             raise FileNotFoundError(f"File {proq_file} does not exists.")
@@ -88,8 +89,11 @@ class ProQ(BaseModel):
         yaml_header = yaml.safe_load(yaml_header)
 
         env = get_relative_env(proq_file)
-        md_string = env.from_string(md_string).render()
-        proq = {k.title(): v for k, v in md2json.fold_level(md_string, level=1).items()}
+
+        proq = {
+            k.title(): env.from_string(v).render() if render_template else v
+            for k, v in md2json.fold_level(md_string, level=1).items()
+        }
 
         missing_headings = []
         for heading in [
@@ -126,6 +130,27 @@ class ProQ(BaseModel):
         template = package_env.get_template("proq_template.md.jinja")
         with open(file_name, "w") as f:
             f.write(template.render(proq=self))
+
+    def evaluate(self):
+        execute_config = self.solution.execute_config
+        return get_test_case_results(
+            self.solution.solution_code,
+            self.public_test_cases + self.private_test_cases,
+            execute_config.source_filename,
+            execute_config.run,
+            execute_config.build,
+        )
+
+    def correct_outputs(self, inplace=False) -> Self:
+        if not inplace:
+            proq = self.model_copy(deep=True)
+        else:
+            proq = self
+        test_case_results = self.evaluate()
+        test_cases = proq.public_test_cases + proq.private_test_cases
+        for test_case, test_case_result in zip(test_cases, test_case_results):
+            test_case.output = test_case_result.actual_output
+        return proq
 
 
 DataT = TypeVar("DataT")

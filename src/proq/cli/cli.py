@@ -46,6 +46,24 @@ class ProqCli:
             lang=lang.lower().strip(), n_public=n_public, n_private=n_private
         ).to_file(output_file)
 
+    def format(self, *proq_files: list[str]):
+        """Formats the given files according to the proq template."""
+        for proq_file in proq_files:
+            ProQ.from_file(proq_file, render_template=False).to_file(proq_file)
+
+    def correct(self, *proq_files: list[str]):
+        """Corrects the test case outputs according to the solution."""
+        for proq_file in proq_files:
+            try:
+                proq = ProQ.from_file(proq_file).correct_outputs(inplace=True)
+                unrendered_proq = ProQ.from_file(proq_file, render_template=False)
+                unrendered_proq.public_test_cases = proq.public_test_cases
+                unrendered_proq.private_test_cases = proq.private_test_cases
+                unrendered_proq.to_file(proq_file)
+
+            except FileNotFoundError:
+                print(f"{proq_file} is not a valid file.")
+
 
 def main():
     fire.Fire(ProqCli(), name="proq")
