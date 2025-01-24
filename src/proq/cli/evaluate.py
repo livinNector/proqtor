@@ -1,3 +1,4 @@
+import difflib
 import os
 
 from termcolor import colored, cprint
@@ -11,23 +12,51 @@ from proq.evaluate_utils import (
 )
 
 
-def print_failed_test_cases(test_case_results: list[TestCaseResult]):
+def color_diff(old_text, new_text):
+    """Generate a rich diff with colors using termcolor.
+
+    Args:
+        old_text (str): The original text.
+        new_text (str): The modified text.
+    """
+    old_lines = old_text.splitlines()
+    new_lines = new_text.splitlines()
+
+    diff = difflib.ndiff(old_lines, new_lines)
+
+    for line in diff:
+        if line.startswith("-"):  # Deletion
+            cprint(line, "red")
+        elif line.startswith("+"):  # Addition
+            cprint(line, "green")
+        elif line.startswith("?"):  # Changed
+            cprint(line, "yellow")
+        else:  # Unchanged
+            print(line)
+    print()
+
+
+def print_failed_test_cases(test_case_results: list[TestCaseResult], diff_mode=False):
     for i, result in enumerate(test_case_results, 1):
         if not result.passed:
             cprint(f"Test case {i}: Failed", "red", attrs=["bold"])
-            cprint("Input:", attrs=["bold"])
+            cprint("Input:", "cyan", attrs=["bold"])
             print(result.input.strip())
-            cprint("Expected output:", attrs=["bold"])
-            print(result.expected_output)
-            cprint("Actual output:", attrs=["bold"])
-            print(result.actual_output or "{{NO OUPUT}}")
+            if not diff_mode:
+                cprint("Expected output:", "cyan", attrs=["bold"])
+                print(result.expected_output)
+                cprint("Actual output:", "cyan",attrs=["bold"])
+                print(result.actual_output or "{{NO OUPUT}}")
+            else:
+                cprint("Expected - Actual Diff:", "cyan", attrs=["bold"])
+                color_diff(result.expected_output, result.actual_output)
 
 
 def count_passed(results: list[TestCaseResult]):
     return sum(map(lambda x: x.passed, results))
 
 
-def evaluate_proq(proq: ProQ, verbose=False) -> ProqCheck:
+def evaluate_proq(proq: ProQ, verbose=False, diff_mode=False) -> ProqCheck:
     source_filename = proq.solution.execute_config.source_filename
     build_command = proq.solution.execute_config.build
     run_command = proq.solution.execute_config.run
@@ -56,11 +85,11 @@ def evaluate_proq(proq: ProQ, verbose=False) -> ProqCheck:
         public_passed = count_passed(test_case_results[:n_public])
         if public_passed < n_public:
             cprint("Public Test Cases:", attrs=["bold"])
-            print_failed_test_cases(test_case_results[:n_public])
+            print_failed_test_cases(test_case_results[:n_public], diff_mode=diff_mode)
         private_passed = count_passed(test_case_results[n_public:])
         if private_passed < n_private:
             cprint("Private Test Cases:", attrs=["bold"])
-            print_failed_test_cases(test_case_results[n_public:])
+            print_failed_test_cases(test_case_results[n_public:], diff_mode=diff_mode)
         cprint("Solution check: ", attrs=["bold"], end="")
         cprint(
             f"{public_passed}/{n_public} public test cases passed",
@@ -124,7 +153,7 @@ def evaluate_proq(proq: ProQ, verbose=False) -> ProqCheck:
     return proq_check
 
 
-def evaluate_proq_files(*files: str | os.PathLike, verbose=False):
+def evaluate_proq_files(*files: str | os.PathLike, verbose=False, diff_mode=False):
     """Evaluates the testcases in the proq files locally.
 
     It uses the local installed compilers and interpreters
@@ -138,6 +167,9 @@ def evaluate_proq_files(*files: str | os.PathLike, verbose=False):
     Args:
         files (str|PathLike): The file names of the proqs to be evaluated.
         verbose (bool): Whether to print the test results.
+        diff_mode (bool):
+            Whether to display expected-actual diff instead of separate
+            expected and actual outputs
     """
     proq_checks: list[tuple[str, ProqCheck]] = []
     for file_path in files:
@@ -146,7 +178,7 @@ def evaluate_proq_files(*files: str | os.PathLike, verbose=False):
             continue
         print(f"Evaluating file {file_path}")
         proq = ProQ.from_file(file_path)
-        result = evaluate_proq(proq, verbose=verbose)
+        result = evaluate_proq(proq, verbose=verbose, diff_mode=diff_mode)
         if verbose:
             print()
         proq_checks.append((file_path, result))
