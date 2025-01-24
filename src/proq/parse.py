@@ -83,7 +83,7 @@ def extract_code_parts(code):
     ).groupdict()
 
     # removing existing tags for backwards compatibility
-    code_parts["prefix"] = strip_tags(code_parts["prefix"], ["prefix"])
+    code_parts["prefix"] = strip_tags(code_parts["prefix"], ["prefix"]).lstrip()
     code_parts["suffix"] = strip_tags(code_parts["suffix"], ["suffix"])
     if "<suffix_invisible>" in code_parts["suffix"]:
         code_parts["suffix"], code_parts["suffix_invisible"] = code_parts[
@@ -91,9 +91,14 @@ def extract_code_parts(code):
         ].split("<suffix_invisible>")
         code_parts["suffix_invisible"] = strip_tags(
             code_parts["suffix_invisible"], ["suffix_invisible"]
-        )
+        ).rstrip()
     else:
         code_parts["suffix_invisible"] = ""
+
+    if not code_parts["suffix"].strip():
+        code_parts["suffix"] = ""
+    elif not code_parts["suffix_invisible"]:
+        code_parts["suffix"] = code_parts["suffix"].rstrip()
 
     return code_parts
 
