@@ -1,4 +1,3 @@
-import difflib
 import os
 from typing import Literal
 
@@ -12,29 +11,7 @@ from proq.evaluate_utils import (
     get_test_case_results,
 )
 
-
-def color_diff(old_text, new_text):
-    """Generate a rich diff with colors using termcolor.
-
-    Args:
-        old_text (str): The original text.
-        new_text (str): The modified text.
-    """
-    old_lines = old_text.splitlines()
-    new_lines = new_text.splitlines()
-
-    diff = difflib.ndiff(old_lines, new_lines)
-
-    for line in diff:
-        if line.startswith("-"):  # Deletion
-            cprint(line, "red")
-        elif line.startswith("+"):  # Addition
-            cprint(line, "green")
-        elif line.startswith("?"):  # Changed
-            cprint(line, "yellow")
-        else:  # Unchanged
-            print(line)
-    print()
+from .utils import color_diff
 
 
 def print_failed_test_cases(
@@ -56,6 +33,7 @@ def print_failed_test_cases(
             else:
                 cprint("Expected - Actual Diff:", "cyan", attrs=["bold"])
                 color_diff(result.expected_output, result.actual_output)
+                print()
 
 
 def count_passed(results: list[TestCaseResult]):

@@ -2,10 +2,12 @@ import os
 from typing import Literal
 
 import fire
+from termcolor import cprint
 
 from proq.core import ProQ
 
 from . import evaluate, export
+from .utils import color_diff
 
 
 class ProqCli:
@@ -63,6 +65,21 @@ class ProqCli:
 
             except FileNotFoundError:
                 print(f"{proq_file} is not a valid file.")
+
+    def show_code(self, proq_file: str, render: bool = False):
+        """Prints the whole solution where each part are highlighted.
+
+        Args:
+            proq_file (str): The proq file.
+            render (bool): Whether to render the jinja template
+        """
+        proq = ProQ.from_file(proq_file, render_template=render)
+        cprint(proq.solution.prefix, color="grey", end="")
+        color_diff(proq.solution.template, proq.solution.solution)
+        if proq.solution.suffix:
+            cprint(proq.solution.suffix, color="grey", end="")
+        if proq.solution.suffix_invisible:
+            cprint(proq.solution.suffix_invisible, on_color="on_light_grey")
 
 
 def main():
