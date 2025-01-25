@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 import warnings
 from typing import Generic, Self, TypeVar
 
@@ -151,6 +152,25 @@ class ProQ(BaseModel):
         for test_case, test_case_result in zip(test_cases, test_case_results):
             test_case.output = test_case_result.actual_output
         return proq
+
+    def export_test_cases(self, output_dir, zip=False):
+        if output_dir.exists():
+            shutil.rmtree(output_dir)
+        output_dir.mkdir()
+        for test_case_set, set_name in [
+            (self.public_test_cases, "public"),
+            (self.private_test_cases, "private"),
+        ]:
+            curr_folder = output_dir / set_name
+            (curr_folder).mkdir()
+            for i, test_case in enumerate(test_case_set, 1):
+                with open(curr_folder / f"input_{i:03}.txt", "w") as f:
+                    f.write(test_case.input)
+                with open(curr_folder / f"output_{i:03}.txt", "w") as f:
+                    f.write(test_case.output)
+        if zip:
+            shutil.make_archive(output_dir, "zip", output_dir)
+            shutil.rmtree(output_dir)
 
 
 DataT = TypeVar("DataT")

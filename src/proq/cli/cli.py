@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Literal
 
 import fire
@@ -80,6 +81,17 @@ class ProqCli:
             cprint(proq.solution.suffix, color="grey", end="")
         if proq.solution.suffix_invisible:
             cprint(proq.solution.suffix_invisible, on_color="on_light_grey")
+
+    def export_test_cases(self, proq_file, zip: bool = False):
+        """Exports the test cases into a folder.
+
+        Args:
+            proq_file (str): The proq file
+            zip (bool): Whether to zip archive instead of a folder.
+        """
+        proq = ProQ.from_file(proq_file)
+        folder = Path(os.path.splitext(proq_file)[0])
+        proq.export_test_cases(folder, zip)
 
 
 def main():
