@@ -5,11 +5,11 @@ from termcolor import colored, cprint
 
 from proq.core import ProQ
 from proq.evaluate_utils import (
-    BuildFailedError,
     ProqCheck,
     TestCaseResult,
     get_test_case_results,
 )
+from proq.execute_utils import BuildFailedError
 
 from .utils import color_diff
 
