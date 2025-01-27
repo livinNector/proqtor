@@ -6,11 +6,18 @@ from typing import Generic, Self, TypeVar
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from termcolor import colored, cprint
 
 import md2json
 
 from .core_components import Solution, TestCase
-from .evaluate_utils import get_test_case_results
+from .evaluate_utils import (
+    BuildFailedError,
+    ProqCheck,
+    get_test_case_results,
+    print_solution_check_results,
+    print_template_check_results,
+)
 from .parse import extract_solution, extract_testcases
 from .prog_langs import ProgLang
 from .template_utils import get_relative_env, package_env
@@ -141,23 +148,79 @@ class ProQ(BaseModel):
         with open(file_name, "w") as f:
             f.write(self.to_str())
 
-    def evaluate(self):
+    def get_test_case_results(self, code, test_cases):
         execute_config = self.solution.execute_config
         return get_test_case_results(
-            self.solution.solution_code,
-            self.public_test_cases + self.private_test_cases,
+            code,
+            test_cases,
             execute_config.source_filename,
             execute_config.run,
             execute_config.build,
         )
+
+    def evaluate(self, verbose=False, diff_mode=False) -> ProqCheck:
+        n_public = len(self.public_testcases)
+
+        if verbose:
+            print("Title:", colored(self.title, "cyan", attrs=["bold"]))
+
+        # Test solution with public and private test cases
+        try:
+            test_case_results = self.get_test_case_results(
+                self.solution.solution_code,
+                self.public_test_cases + self.private_test_cases,
+            )
+        except BuildFailedError as e:
+            if verbose:
+                cprint("Build Failed", color="red", attrs=["bold"])
+                cprint(e.command_output, color="red")
+            return ProqCheck(solution_check=False, template_check=False)
+
+        if verbose:
+            print_solution_check_results(
+                test_case_results[:n_public],
+                test_case_results[n_public:],
+                diff_mode=diff_mode,
+            )
+
+        if not all(map(lambda x: x.passed, test_case_results)):
+            return ProqCheck(solution_check=False, template_check=False)
+
+        # Test template with public and private test cases
+        try:
+            template_test_case_results = self.get_test_case_results(
+                self.solution.template_code,
+                self.public_test_cases + self.private_test_cases,
+            )
+        except BuildFailedError:
+            if verbose:
+                print(
+                    colored("Template Check:", attrs=["bold"]),
+                    colored("passed - build failed", color="green"),
+                )
+            return ProqCheck(solution_check=True, template_check=True)
+
+        template_passed = any(result.passed for result in template_test_case_results)
+        proq_check = ProqCheck(solution_check=True, template_check=not template_passed)
+
+        if verbose:
+            print_template_check_results(
+                template_test_case_results[:n_public],
+                template_test_case_results[n_public:],
+                proq_check.template_check,
+            )
+
+        return proq_check
 
     def correct_outputs(self, inplace=False) -> Self:
         if not inplace:
             proq = self.model_copy(deep=True)
         else:
             proq = self
-        test_case_results = self.evaluate()
         test_cases = proq.public_test_cases + proq.private_test_cases
+        test_case_results = self.get_test_case_results(
+            self.solution.solution_code, test_cases
+        )
         for test_case, test_case_result in zip(test_cases, test_case_results):
             test_case.output = test_case_result.actual_output
         return proq

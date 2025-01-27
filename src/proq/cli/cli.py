@@ -6,9 +6,10 @@ import fire
 from termcolor import cprint
 
 from proq.core import ProQ
+from proq.evaluate_utils import ProqCheck
+from proq.utils import color_diff
 
-from . import evaluate, export
-from .utils import color_diff
+from . import export
 
 
 class ProqCli:
@@ -18,7 +19,6 @@ class ProqCli:
     """
 
     def __init__(self) -> None:
-        self.evaluate = evaluate.evaluate_proq_files
         self.export = export.proq_export
 
     def create(
@@ -92,6 +92,54 @@ class ProqCli:
         proq = ProQ.from_file(proq_file)
         folder = Path(os.path.splitext(proq_file)[0])
         proq.export_test_cases(folder, zip)
+
+    def evaluate(self, *files: str | os.PathLike, verbose=False, diff_mode=False):
+        """Evaluates the testcases in the proq files locally.
+
+        It uses the local installed compilers and interpreters
+        to evalate the testcases.
+
+        The config on how to execute the solution code is present
+        in the first line of the code block in the solution.
+
+        ```{lang_id} {filename} -r '{run_command}' -b '{build_command}'
+
+        Args:
+            files (str|PathLike): The file names of the proqs to be evaluated.
+            verbose (bool): Whether to print the test results.
+            diff_mode (bool):
+                Whether to display expected-actual diff instead of separate
+                expected and actual outputs
+        """
+        proq_checks: list[tuple[str, ProqCheck]] = []
+        for file_path in files:
+            if not os.path.isfile(file_path):
+                print(f"{file_path} is not a valid file")
+                continue
+            print(f"Evaluating {file_path}")
+            proq = ProQ.from_file(file_path)
+            result = proq.evaluate(verbose=verbose, diff_mode=diff_mode)
+            if verbose:
+                print()
+            proq_checks.append((file_path, result))
+
+        n_proqs = len(proq_checks)
+        cprint(
+            f"Total of {n_proqs} proq{'s' if n_proqs>1 else ''} evaluated.",
+            attrs=["bold"],
+        )
+        for file_path, proq_check in proq_checks:
+            cprint(
+                ("✓" if proq_check.solution_check else "✗") + " solution",
+                "green" if proq_check.solution_check else "red",
+                end=" ",
+            )
+            cprint(
+                ("✓" if proq_check.template_check else "✗") + " template",
+                "green" if proq_check.template_check else "red",
+                end=" ",
+            )
+            print(os.path.relpath(file_path, os.curdir))
 
 
 def main():
