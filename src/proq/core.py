@@ -79,17 +79,14 @@ class ProQ(BaseModel):
         )
 
     @classmethod
-    def from_file(cls, proq_file, render_template=True):
-        """Loads the proq file and returns a Proq."""
-        if not os.path.isfile(proq_file):
-            raise FileNotFoundError(f"File {proq_file} does not exists.")
+    def from_str(cls, content, base=None, render_template=False):
+        if base is None:
+            base = os.curdir
 
-        with open(proq_file) as f:
-            md_file = f.read()
-        yaml_header, md_string = md_file.split("---", 2)[1:]
+        yaml_header, md_string = content.split("---", 2)[1:]
         yaml_header = yaml.safe_load(yaml_header)
 
-        env = get_relative_env(proq_file)
+        env = get_relative_env(base)
 
         proq = {
             k.title(): env.from_string(v).render() if render_template else v
@@ -127,10 +124,22 @@ class ProQ(BaseModel):
         proq.update(yaml_header)
         return cls.model_validate(proq)
 
-    def to_file(self, file_name):
-        template = package_env.get_template("proq_template.md.jinja")
+    @classmethod
+    def from_file(cls, proq_file, render_template=True):
+        """Loads the proq file and returns a Proq."""
+        if not os.path.isfile(proq_file):
+            raise FileNotFoundError(f"File {proq_file} does not exists.")
+        with open(proq_file) as f:
+            return ProQ.from_str(
+                f.read(), os.path.dirname(proq_file), render_template=render_template
+            )
+
+    def to_str(self) -> str:
+        return package_env.get_template("proq_template.md.jinja").render(proq=self)
+
+    def to_file(self, file_name) -> str:
         with open(file_name, "w") as f:
-            f.write(template.render(proq=self))
+            f.write(self.to_str())
 
     def evaluate(self):
         execute_config = self.solution.execute_config
