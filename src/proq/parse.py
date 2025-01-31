@@ -80,7 +80,20 @@ def extract_code_parts(code):
         r"(?P<prefix>.*)<template>(?P<tagged_template>.*)</template>(?P<suffix>.*)",
         code,
         re.DOTALL,
-    ).groupdict()
+    )
+
+    # Assume the whole code as solution if to tags are there
+    if code_parts is None:
+        return {
+            "prefix": "",
+            "suffix": "",
+            "suffix_invisible": "",
+            "tagged_template": "\n<sol>\n"
+            f"{code}{"" if code[-1]=='\n' else '\n'}"
+            "</sol>\n",
+        }
+
+    code_parts = code_parts.groupdict()
 
     # removing existing tags for backwards compatibility
     code_parts["prefix"] = strip_tags(code_parts["prefix"], ["prefix"]).lstrip()
