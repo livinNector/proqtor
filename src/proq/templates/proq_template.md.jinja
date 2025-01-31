@@ -3,13 +3,13 @@
 ## Input {{loop.index}}
 
 ```
-{{test_case.input-}}
+{{test_case.input-}}{{"\n" if test_case.input[-1] !="\n" else ""-}}
 ```
 
 ## Output {{loop.index}}
 
 ```
-{{test_case.output-}}
+{{test_case.output-}}{{"\n" if test_case.output[-1] !="\n" else ""-}}
 ```
 {%endfor-%}
 {%endmacro-%}
