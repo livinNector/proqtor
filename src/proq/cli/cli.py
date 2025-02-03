@@ -50,12 +50,20 @@ class ProqCli:
         ).to_file(output_file)
 
     def format(self, *proq_files: list[str]):
-        """Formats the given files according to the proq template."""
+        """Formats the given files according to the proq template.
+
+        Args:
+            proq_files (list[str]): List of proq files to format.
+        """
         for proq_file in proq_files:
             ProQ.from_file(proq_file, render_template=False).to_file(proq_file)
 
     def correct(self, *proq_files: list[str]):
-        """Corrects the test case outputs according to the solution."""
+        """Corrects the test case outputs according to the solution.
+
+        Args:
+            proq_files (list[str]): List of proq files to correct.
+        """
         for proq_file in proq_files:
             try:
                 proq = ProQ.from_file(proq_file).correct_outputs(inplace=True)

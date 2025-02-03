@@ -6,10 +6,7 @@ Proq - A command line tool for authoring programming questions at scale.
 - `ProQ` - A pydantic model defining a programming question. This provides an pyhton API that can be used to integrate proq with other code evaluation environments.
 - [**Proq file format**](#proq-file-format) - A Markdown based jinja template format for authoring a proq in a human readable format.
 - [**Proq set config file format**](#proq-set-config-file) - An YAML file that defines a set of proqs with heading outline with references to the proq file.
-- `proq` - A command line tool for working with proq files. It has three subcommands.
-  - `create` - For creating an empty proq file template with the given configuration.
-  - `evaluate` - For evaluating the testcases locally.
-  - `export` - For exporting it to different sharable formats like html, pdf and json.
+- `proq` - A command line tool for working with proq files.
 
 This library defines a pydantic model for a programming question and a markdown based jinja template format for authoring a proq which can be loaded as the proq model.
 
@@ -32,6 +29,9 @@ Use `proq [command] --help` to know more about the sub-command.
 
 - `proq create` - create a empty proq file templates for authoring the programming questions.
 - `proq evaluate` - evaluate the test cases configured using the build and compile process defined proq files.
+- `proq correct` - corrects the given proq by computing the outputs from the inputs and the solution given.
+- `proq export-test-cases` - export the test cases into a folder with two subfolders public and private with the inputs and outputs as text files.
+- `proq show-code` - Displays the different sections of the code block in a highlighted manner.
 - `proq export` - export a **proq file** or a **proq set config file** as JSON, html or pdf.
 
 ### Examples
@@ -58,19 +58,51 @@ Use `proq [command] --help` to know more about the sub-command.
    proq evaluate sample.md
    ```
 
-2. Evaluating multiple files.
+2. Evaluating a single proq file in verbose mode displaying what went wrong.
+   ```
+   proq evaluate sample.md -v
+   ```
+
+3. Evaluating multiple files.
    ```
    proq evaluate sample1.md sample2.md sample3.md
    ```
    This evaluates the given three files.
 
-3. Evaluating multiple files using glob patterns and brace expansions.
+4. Evaluating multiple files using glob patterns and brace expansions.
    ```
    proq evaluate sample*.md 
    proq evaluate sample{1..4}.md
    proq evaluate sample{1,3}.md
    ```
    This evaluates the files that are expanded as the result.
+
+#### Correcting a proq
+1. Correcting a single proq file.
+   ```
+   proq correct sample.md
+   ```
+2. Correcting a single proq file.
+   ```
+   proq correct sample*.md 
+   proq correct sample{1..4}.md
+   proq correct sample{1,3}.md
+   ```
+
+#### Exporting the Test Cases
+1. Exporting the test cases as a folder
+   ```
+   proq export-test-cases sample.md
+   ```
+
+2. Exporting the test cases as a zip
+   ```
+   proq export-test-cases sample.md --zip
+   proq export-test-cases sample.md -z
+   ```
+
+#### Displaying Code block
+
 
 #### Exporting a proq
 
@@ -123,32 +155,43 @@ This section describes the coding task to be solved, along with examples to clar
 ### 3. Solution
 The solution is defined in a Markdown code block and annotated with special HTML-like tags to structure the code into editable and non-editable parts.
 
-#### Tag Overview:
-- `<prefix>...</prefix>`(Optional):  
-  Non-editable code that appears before the main solution.
-- `<template>...</template>`(Required):  
-  The template includes the parts of the code that common in both solution and the editable template. A template can have multiple `<sol>` and `<los>` parts.
+#### Solution Parts Overview:
+- **Template** (Required): The `<template>...</template>` tag denotes the editable area of the code which can contain multiple `<sol>...</sol>` and `<los>...</los>` tags within. The template includes the parts of the code that common in both solution and the editable template.
   - `<sol>...</sol>`: Marks the content that is only present in the solution.
   - `<los>...</los>`: Marks the content that is only present in the template.
-- `<suffix>...</suffix>`(Optional):  
+- **Prefix** (Optional): The part above the template block.  
+  Non-editable code that appears before the main solution.
+- `<template>...</template>`(Required):  
+  
+- **Suffix** (Optional): The part below the template block. 
   Non-editable code after the solution.
-- `<suffix_invisible>...</suffix_invisible>`(Optional):  
+- **Invisible Suffix** (Optional):  The part comes after the suffix whose begining is marked by the opening tag `<suffix_invisible>`.
   Non-visible code for additional functionality or testing.
 
 #### Code Block Header - Execute Config
 
-The language specified in the start of the solution code block is considered as the coding language. In addition to the language. The first line also has some arguments that resemble command line arguments of the below format.
+The language specified in the start of the solution code block is considered as the coding language. In addition to the language, the first line also has some arguments that resemble command line arguments of the below format.
 ```
-FILE_NAME -r 'RUN_COMMAND' -b 'BUILD_COMMAND'
+```lang FILE_NAME -r 'RUN_COMMAND' -b 'BUILD_COMMAND'
+```
+**Examples**
+
+```
+```python test.py -r 'python test.py'
+```
+
+```
+```c test.c -b 'gcc test.c -o test' -r './test'
 ```
 
 This is used for local evaluation of the programming assignments.
 
-**Example**:
+**Sample Solution**
 ````markdown
 # Solution
 
 ```python test.py -r 'python test.py'
+# Anything above the template is the prefix part
 <template>
 def delete_first_three(l: list) -> None:
     '''
@@ -162,10 +205,9 @@ def delete_first_three(l: list) -> None:
     <los>...</los>
     <sol>del l[:3]</sol>
 </template>
-
+# Visible part of the suffix would go here
 <suffix_invisible>
 {% include '../function_type_and_modify_check_suffix.py.jinja' %}
-</suffix_invisible>
 ```
 ````
 
