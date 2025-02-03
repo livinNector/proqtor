@@ -1,5 +1,6 @@
 ---
 title: Sum of numbers in even indices of a list.
+tags: [list, indexing]
 ---
 
 # Problem Statement
@@ -25,24 +26,20 @@ Find the sum of the numbers present in the even indices of the given list.
 
 The elements at even positions are 1, 3 and 5. Their sum is 9.
 
-
 # Solution
-```py test.py -r 'python test.py' 
-<prefix>
+
+```python test.py -r 'python test.py'
 def sum_even_indices(l:int) -> int:
     '''
     Return the sum of numbers in 
     even indices of the list.
     '''
-</prefix>
 <template>
     return <sol>sum(l[::2])</sol><los>...</los>
 </template>
-<suffix>
 # Driver code
 l = list(map(int, input().split(',')))
 print(sum_even_indices(l))
-</suffix>
 ```
 
 # Public Test Cases
@@ -53,12 +50,11 @@ print(sum_even_indices(l))
 1,2,3,4,5
 ```
 
-## Output 1 
+## Output 1
 
 ```
 9
 ```
-
 
 ## Input 2
 
@@ -72,7 +68,6 @@ print(sum_even_indices(l))
 5
 ```
 
-
 ## Input 3
 
 ```
@@ -84,7 +79,6 @@ print(sum_even_indices(l))
 ```
 -4
 ```
-
 
 # Private Test Cases
 

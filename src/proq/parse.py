@@ -22,13 +22,13 @@ def get_tag_content(tag: str, html: str) -> str:
         Inner html if tag found else empty string
     """
     content = re.findall(f"<{re.escape(tag)}>(.*?)</{re.escape(tag)}>", html, re.DOTALL)
-    content = clip_extra_lines(content[0]) if content else ""
+    content = content[0] if content and content[0].strip() else ""
     return content
 
 
 def remove_tag(html, tag):
     return re.sub(
-        f"<{re.escape(tag)}>(.*?)</{re.escape(tag)}>", "", html, flags=re.DOTALL
+        f"<{re.escape(tag)}( .*?|)>(.*?)</{re.escape(tag)}>", "", html, flags=re.DOTALL
     )
 
 
@@ -39,9 +39,12 @@ def remove_tags(html, tags: list[str]):
 
 
 def strip_tags(html: str, tags: list[str]) -> str:
-    """Removes all tags from an HTML text."""
+    """Removes the given tags from an HTML text without removing the content."""
     return re.sub(
-        r"<\/?({tags}).*?>".format(tags="|".join(tags)), "", html, flags=re.DOTALL
+        r"<\/?({tags})( .*?|)>".format(tags="|".join(map(re.escape, tags))),
+        "",
+        html,
+        flags=re.DOTALL,
     )
 
 
@@ -72,33 +75,55 @@ def extract_codeblock_content(text):
     }
 
 
+def extract_code_parts(code):
+    code_parts = re.match(
+        r"(?P<prefix>.*)<template>(?P<tagged_template>.*)</template>(?P<suffix>.*)",
+        code,
+        re.DOTALL,
+    )
+
+    # Assume the whole code as solution if to tags are there
+    if code_parts is None:
+        return {
+            "prefix": "",
+            "suffix": "",
+            "suffix_invisible": "",
+            "tagged_template": "\n<sol>\n"
+            f"{code}{"" if code[-1]=='\n' else '\n'}"
+            "</sol>\n",
+        }
+
+    code_parts = code_parts.groupdict()
+
+    # removing existing tags for backwards compatibility
+    code_parts["prefix"] = strip_tags(code_parts["prefix"], ["prefix"]).lstrip()
+    code_parts["suffix"] = strip_tags(code_parts["suffix"], ["suffix"])
+    if "<suffix_invisible>" in code_parts["suffix"]:
+        code_parts["suffix"], code_parts["suffix_invisible"] = code_parts[
+            "suffix"
+        ].split("<suffix_invisible>")
+        code_parts["suffix_invisible"] = strip_tags(
+            code_parts["suffix_invisible"], ["suffix_invisible"]
+        ).rstrip()
+    else:
+        code_parts["suffix_invisible"] = ""
+
+    if not code_parts["suffix"].strip():
+        code_parts["suffix"] = ""
+    elif not code_parts["suffix_invisible"]:
+        code_parts["suffix"] = code_parts["suffix"].rstrip()
+
+    return code_parts
+
+
 def extract_solution(solution_codeblock):
-    solution = extract_codeblock_content(solution_codeblock)
-    solution_template = solution.pop("code")
-    code = {}
-    for part in [
-        "prefix",
-        "suffix",
-        "suffix_invisible",
-        "invisible_suffix",
-        "template",
-    ]:
-        code[part] = get_tag_content(part, solution_template)
-
-    code["solution"] = code["template"]
-    code["template"] = strip_tags(
-        remove_tags(code["template"], ["solution", "sol"]), ["los"]
-    )
-
-    # opposite of sol will be in template but removed from solution
-    code["solution"] = strip_tags(
-        remove_tag(code["solution"], "los"), ["sol", "solution"]
-    )
-    return solution | code
+    code_block_contents = extract_codeblock_content(solution_codeblock)
+    code_parts = extract_code_parts(code_block_contents.pop("code"))
+    return code_block_contents | code_parts
 
 
-def extract_testcases(testcases_dict):
-    testcases_list = list(testcases_dict.values())
+def extract_testcases(testcase_blocks: tuple):
+    testcases_list = [x[1] for x in testcase_blocks]
     return [
         {
             "input": extract_codeblock_content(input)["code"],

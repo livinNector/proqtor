@@ -15,10 +15,9 @@ sum_of_squares(d, 'a','e') # Output: 0
 First case: The sum of squares is `2^2 + 3^2 = 4 + 9 = 13`, so the result is `13`.
 Second case: The key 'e' is not present in the dict, so the result is `0`.
 
-
 # Solution
 
-```py3 test.py -r 'python test.py'
+```python test.py -r 'python test.py'
 <template>
 def sum_of_squares(d: dict, k1: str, k2: str) -> int:
     '''
@@ -42,7 +41,6 @@ def sum_of_squares(d: dict, k1: str, k2: str) -> int:
 </template>
 <suffix_invisible>
 {% include '../function_type_and_modify_check_suffix.py.jinja' %}
-</suffix_invisible>
 ```
 
 # Public Test Cases

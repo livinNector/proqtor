@@ -1,5 +1,6 @@
 ---
 title: Check if two digit even number
+tags: [numbers, boolean expression]
 ---
 
 # Problem Statement
@@ -15,7 +16,7 @@ is_two_digit_even(21) # False, two digit but not even
 
 # Solution
 
-```py3 test.py -r 'python test.py'
+```python test.py -r 'python test.py'
 <template>
 def is_two_digit_even(n: int) -> bool:
     '''
@@ -29,9 +30,6 @@ def is_two_digit_even(n: int) -> bool:
     <los>...</los>
     <sol>return 10 <= n <= 99 and n % 2 == 0</sol>
 </template>
-<suffix_invisible>
-{% include '../function_type_and_modify_check_suffix.py.jinja' %}
-</suffix_invisible>
 ```
 
 # Public Test Cases
@@ -66,7 +64,7 @@ is_equal(
 False
 ```
 
-## Input 3 
+## Input 3
 
 ```
 is_equal(

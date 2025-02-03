@@ -14,7 +14,7 @@ After deleting the first three elements, the list becomes `[4, 5]`.
 
 # Solution
 
-```py3 test.py -r 'python test.py'
+```python test.py -r 'python test.py'
 <template>
 def delete_first_three(l: list) -> None:
     '''
@@ -28,10 +28,8 @@ def delete_first_three(l: list) -> None:
     <los>...</los>
     <sol>del l[:3]</sol>
 </template>
-
 <suffix_invisible>
 {% include '../function_type_and_modify_check_suffix.py.jinja' %}
-</suffix_invisible>
 ```
 
 # Public Test Cases

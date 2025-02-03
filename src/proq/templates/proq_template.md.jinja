@@ -1,0 +1,35 @@
+{%-macro render_test_cases(test_cases)%}
+{%-for test_case in test_cases%}
+## Input {{loop.index}}
+
+```
+{{test_case.input-}}{{"\n" if test_case.input[-1] !="\n" else ""-}}
+```
+
+## Output {{loop.index}}
+
+```
+{{test_case.output-}}{{"\n" if test_case.output[-1] !="\n" else ""-}}
+```
+{%endfor-%}
+{%endmacro-%}
+---
+title: {{proq.title}}
+{%if proq.tags -%}
+tags: [{{proq.tags | join(', ')}}]
+{%endif-%}
+---
+
+# Problem Statement
+
+{{proq.statement}}
+
+# Solution
+{% with solution = proq.solution %}
+{% include "solution.md.jinja" -%}
+{% endwith %}
+
+# Public Test Cases
+{{render_test_cases(proq.public_test_cases)}}
+# Private Test Cases
+{{render_test_cases(proq.private_test_cases)}}

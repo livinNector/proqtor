@@ -1,16 +1,14 @@
 from copy import deepcopy
 
-{% raw %}
 def order_repr(d):
     '''Print in lexicographical order of repr if dict and set'''
     if isinstance(d,dict):
         d = sorted(d.items(), key=lambda x:order_repr(x[0]) )
-        return f"{{{', '.join(f'{order_repr(k)}: {order_repr(v)}' for k,v in d)}}}"
+        return "{"f"{', '.join(f'{order_repr(k)}: {order_repr(v)}' for k,v in d)}""}"
     elif isinstance(d,set):
-        return f"{{{', '.join(map(order_repr,sorted(d, key=order_repr)))}}}"
+        return "{"f"{', '.join(map(order_repr,sorted(d, key=order_repr)))}""}"
     else:
         return repr(d)
-{% endraw %}
 
 def order_print(d):
     print(order_repr(d))

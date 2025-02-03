@@ -1,0 +1,16 @@
+{%set execute_config = solution.execute_config-%}
+```{{solution.lang}}{%if execute_config.source_filename %} {{execute_config.source_filename}}{%endif%}{%if execute_config.build%} -b '{{execute_config.build}}'{%endif%}{%if execute_config.run%} -r '{{execute_config.run}}'{%endif%}
+{%if solution.prefix.strip()%}{{solution.prefix}}{%endif-%}
+<template>
+{{-solution.tagged_template-}}
+</template>
+{%-if solution.suffix.strip() -%}
+{{-solution.suffix-}}
+{%-elif solution.suffix_invisible.strip()-%}
+{{"\n"}}
+{%-endif-%}
+{%-if solution.suffix_invisible.strip()-%}
+<suffix_invisible>
+{{-solution.suffix_invisible-}}
+{%endif%}
+```
