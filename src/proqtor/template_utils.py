@@ -4,7 +4,7 @@ from jinja2 import Environment, FunctionLoader, PackageLoader, select_autoescape
 from marko.ext.gfm import gfm
 
 package_env = Environment(
-    loader=PackageLoader("proq", "templates"), autoescape=select_autoescape()
+    loader=PackageLoader("proqtor", "templates"), autoescape=select_autoescape()
 )
 package_env.filters["gfm"] = gfm.convert
 

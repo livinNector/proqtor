@@ -9,7 +9,7 @@ from pydantic import BeforeValidator
 #   > runtimes.json
 
 # langs and aliases taken from piston
-runtimes = json.loads(files("proq.data").joinpath("runtimes.json").read_text())
+runtimes = json.loads(files("proqtor.data").joinpath("runtimes.json").read_text())
 alias_map = {runtime["language"]: runtime["language"] for runtime in runtimes} | {
     alias: runtime["language"] for runtime in runtimes for alias in runtime["aliases"]
 }

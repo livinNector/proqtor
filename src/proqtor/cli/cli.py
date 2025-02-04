@@ -5,9 +5,9 @@ from typing import Literal
 import fire
 from termcolor import cprint
 
-from proq.core import ProQ
-from proq.evaluate_utils import ProqCheck
-from proq.utils import color_diff
+from proqtor.core import ProQ
+from proqtor.evaluate_utils import ProqCheck
+from proqtor.utils import color_diff
 
 from . import export
 
