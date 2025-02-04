@@ -1,9 +1,9 @@
 [project]
-name = "proq"
-version = "1.1.0"
+name = "proqtor"
+version = "2.0.0"
 description = "A command-line based tool for authoring programming questions at scale."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = { file = "LICENSE.txt" }
 
 authors = [{ name = "Livin Nector", email = "livinnector2001@gmail.com" }]
@@ -28,7 +28,7 @@ proqgen = [
 
 [project.urls]
 [project.scripts]
-proq = "proq.cli:main"
+proq = "proqtor.cli:main"
 
 
 [build-system]
