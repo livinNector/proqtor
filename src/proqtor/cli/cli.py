@@ -9,10 +9,14 @@ from termcolor import cprint
 
 from proqtor.core import ProQ, ProqParseError
 from proqtor.evaluate_utils import ProqCheck
-from proqtor.gen_ai_utils import generate_proq
 from proqtor.utils import color_diff
 
 from . import export
+
+try:
+    from proqtor.gen_ai_utils import generate_proq
+except ImportError:
+    gen_ai_features = False
 
 
 @contextmanager
@@ -175,34 +179,45 @@ class ProqCli:
             )
             print(os.path.relpath(file_path, os.curdir))
 
-    def generate(
-        self,
-        prompt: str,
-        *examples: list[str],
-        output_file: str = None,
-        model: str = "groq:gemma2-9b-it",
-    ):
-        """Generates a new proq file based on the given prompt and examples.
+    if gen_ai_features:
 
-        Args:
-            prompt (str): The prompt describing the new proq
-            examples (str): The file paths to the example proqs
-            output_file (str): The file name to store the output.
-                If not provided, the snake cased version of the title
-                generated will be used as the file name.
-            model (str): The LLM model to be used in the format of "provider:model_id".
-                The currently supported providers are groq and open-ai.
-        """
-        try:
-            proq = generate_proq(prompt, example_files=examples, model=model)
-        except ProqParseError as e:
-            print(e.message)
-            with open(output_file, "w") as f:
-                f.write(e.content)
-        else:
-            if output_file is None:
-                output_file = proq.title.lower().replace(" ", "_") + ".md"
-            proq.to_file(output_file)
+        def generate(
+            self,
+            prompt: str,
+            *examples: list[str],
+            output_file: str = None,
+            model: str = "groq:gemma2-9b-it",
+        ):
+            """Generates a new proq file based on the given prompt and examples.
+
+            Args:
+                prompt (str): The prompt describing the new proq
+                examples (str): The file paths to the example proqs
+                output_file (str): The file name to store the output.
+                    If not provided, the snake cased version of the title
+                    generated will be used as the file name.
+                model (str):
+                    The LLM model to be used in the format of "provider:model_id".
+                    The currently supported providers are groq and open-ai.
+            """
+            try:
+                proq = generate_proq(prompt, example_files=examples, model=model)
+            except ProqParseError as e:
+                print("Genrated Proq is not in the required format:", e.message)
+                with open(output_file, "w") as f:
+                    f.write(e.content)
+            else:
+                if output_file is None:
+                    output_file = proq.title.lower().replace(" ", "_") + ".md"
+                proq.to_file(output_file)
+            print(f"Output is saved to {output_file}")
+    else:
+
+        def generate(self):
+            print(
+                "Gen AI features are not installed. To use Gen AI features install the "
+                "optional dependencies proqtor[genai]"
+            )
 
 
 def main():
