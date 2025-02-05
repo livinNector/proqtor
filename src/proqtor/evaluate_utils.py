@@ -102,6 +102,10 @@ def count_passed(results: list[TestCaseResult]):
     return sum(map(lambda x: x.passed, results))
 
 
+def get_passed(results: list[TestCaseResult]):
+    return [i for i, result in enumerate(results, 1) if result.passed]
+
+
 def print_solution_check_results(
     public_test_cases, private_test_cases, diff_mode=False
 ):
@@ -145,16 +149,16 @@ def print_template_check_results(public_test_cases, private_test_cases, template
         end=" | " if not template_check else "\n",
     )
     if not template_check:
-        cprint(
-            "public testcases: "
-            f"{count_passed(public_test_cases)}/{len(public_test_cases)} "
-            "passed",
-            "red",
-            end="\t",
-        )
-        cprint(
-            "private testcases: "
-            f"{count_passed(private_test_cases)}/{len(private_test_cases)} "
-            "passed",
-            "red",
-        )
+        passed_test_cases = ",".join(map(str, get_passed(public_test_cases)))
+        if passed_test_cases:
+            cprint(
+                "public testcase: " f"{passed_test_cases} " "passed",
+                "red",
+                end="\t",
+            )
+        passed_test_cases = ",".join(map(str, get_passed(private_test_cases)))
+        if passed_test_cases:
+            cprint(
+                "private testcase: " f"{passed_test_cases} " "passed",
+                "red",
+            )
