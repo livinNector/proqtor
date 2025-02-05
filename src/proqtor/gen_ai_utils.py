@@ -58,14 +58,10 @@ def generate_proq(prompt, example_files, model="groq:gemma2-9b-it"):
     model = get_model(model)
     proq_template = (final_prompt | model).invoke({"prompt": prompt}).content
 
-    try:
-        un_rendered = ProQ.from_str(proq_template)
-        corrected = ProQ.from_str(
-            proq_template, Path(example_files[0]).parent, render_template=True
-        ).correct_outputs()
-        un_rendered.public_test_cases = corrected.public_test_cases
-        un_rendered.private_test_cases = corrected.private_test_cases
-        return un_rendered
-    except:  # noqa: E722
-        warnings.info("Error in parsing the proq template.")
-        return proq_template
+    un_rendered = ProQ.from_str(proq_template)
+    corrected = ProQ.from_str(
+        proq_template, Path(example_files[0]).parent, render_template=True
+    ).correct_outputs()
+    un_rendered.public_test_cases = corrected.public_test_cases
+    un_rendered.private_test_cases = corrected.private_test_cases
+    return un_rendered

@@ -216,7 +216,7 @@ Use `proq [command] --help` to know more about the sub-command.
    ```
    proq correct sample.md
    ```
-2. Correcting a single proq file.
+2. Correcting multiple proq files.
    ```
    proq correct sample*.md 
    proq correct sample{1..4}.md
@@ -273,13 +273,18 @@ Use `proq [command] --help` to know more about the sub-command.
 
 #### Generating new proqs with Few shot examples (experimental)
 
-`proq generate` uses LLMs with a prompt and fewshot examples to create new proq files. Currently Open AI and groq models are supported. This will need the respective API keys to be added as environment variables. Models are specified in the format `"provider:model_name"`.
+`proq generate` uses LLMs with a prompt and fewshot examples to create new proq files. Currently Open AI (`open-ai`) and `groq` models are supported. This will need the respective API keys to be added as environment variables. Models are specified in the format `"provider:model_name"`.
 
-**Examples**
-```
-export GROQ_API_KEY=<Your API Key>
-proq generate "write a function to find the sum of squares of odd numbers in a given list" example1.md example2.md  -o sum_squares_odd.md
-```
+1. Using default model "groq:gemma2-9b-it".
+   ```
+   export GROQ_API_KEY=<Your API Key>
+   proq generate "write a function to find the sum of squares of odd numbers in a given list" example1.md example2.md  -o sum_squares_odd.md
+   ```
+2. Specifying different model
+   ```
+   export OPENAI_API_KEY=<Your API Key>
+   proq generate "write a function to find the sum of squares of odd numbers in a given list" example1.md example2.md  -o sum_squares_odd.md -m "open-ai:gpt-4o-mini"
+   ```
 
 ## Proq Set Config File
 
