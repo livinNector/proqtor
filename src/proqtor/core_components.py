@@ -9,7 +9,7 @@ from .parse import extract_solution, remove_tags, strip_tags
 from .prog_langs import ProgLang
 from .template_utils import package_env
 
-lang_default_files = files("proq.templates.lang_defaults")
+lang_default_files = files("proqtor.templates.lang_defaults")
 solution_template = package_env.get_template("solution.md.jinja")
 
 

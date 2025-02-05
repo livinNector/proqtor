@@ -28,6 +28,13 @@ PRIVATE_TEST_CASES = "Private Test Cases"
 SOLUTION = "Solution"
 
 
+class ProqParseError(Exception):
+    def __init__(self, message, content):
+        super().__init__(message)
+        self.message = message
+        self.content = content
+
+
 class ProQ(BaseModel):
     """Pydantic model for a Programming Question (ProQ)."""
 
@@ -89,16 +96,34 @@ class ProQ(BaseModel):
     def from_str(cls, content, base=None, render_template=False):
         if base is None:
             base = os.curdir
+        try:
+            yaml_header, md_string = content.split("---", 2)[1:]
+        except Exception:
+            raise ProqParseError(message="Yaml header not found.", content=content)
+        try:
+            yaml_header = yaml.safe_load(yaml_header)
+        except Exception:
+            raise ProqParseError(
+                message="Invalid yaml in the yaml header", content=content
+            )
+        if "title" not in yaml_header:
+            raise ProqParseError(
+                message="Title not found in yaml header", content=content
+            )
 
-        yaml_header, md_string = content.split("---", 2)[1:]
-        yaml_header = yaml.safe_load(yaml_header)
+        try:
+            env = get_relative_env(base)
 
-        env = get_relative_env(base)
-
-        proq = {
-            k.title(): env.from_string(v).render() if render_template else v
-            for k, v in md2json.fold_level(md_string, level=1).items()
-        }
+            proq = {
+                k.title(): env.from_string(v).render() if render_template else v
+                for k, v in md2json.fold_level(md_string, level=1).items()
+            }
+        except Exception as e:
+            raise ProqParseError(
+                message="Error occured while parsing or rendering "
+                f"first level header contents  - {e.__class__.__name__}: {e}",
+                content=content,
+            )
 
         missing_headings = []
         for heading in [
@@ -111,23 +136,48 @@ class ProQ(BaseModel):
                 missing_headings.append(heading)
         if missing_headings:
             many = len(missing_headings) > 1
-            raise ValueError(
-                f"The following required heading{'s' if many else ''} "
+            raise ProqParseError(
+                message=f"The following required heading{'s' if many else ''} "
                 f"{'are' if many else 'is'} missing - "
                 + ((",".join(missing_headings[:-1]) + " and ") if many else "")
                 + missing_headings[-1],
+                content=content,
             )
 
-        proq[PUBLIC_TEST_CASES] = md2json.fold_level(
-            proq[PUBLIC_TEST_CASES], level=2, return_type="list"
-        )
-        proq[PRIVATE_TEST_CASES] = md2json.fold_level(
-            proq[PRIVATE_TEST_CASES], level=2, return_type="list"
-        )
         proq[PROBLEM_STATEMENT] = proq[PROBLEM_STATEMENT].strip()
-        proq[SOLUTION] = extract_solution(proq[SOLUTION])
-        proq[PUBLIC_TEST_CASES] = extract_testcases(proq[PUBLIC_TEST_CASES])
-        proq[PRIVATE_TEST_CASES] = extract_testcases(proq[PRIVATE_TEST_CASES])
+        try:
+            proq[SOLUTION] = extract_solution(proq[SOLUTION])
+        except Exception as e:
+            raise ProqParseError(
+                message="Error occured while extracting solution"
+                f" - {e.__class__.__name__}: {e}",
+                content=content,
+            )
+
+        try:
+            proq[PUBLIC_TEST_CASES] = md2json.fold_level(
+                proq[PUBLIC_TEST_CASES], level=2, return_type="list"
+            )
+            proq[PUBLIC_TEST_CASES] = extract_testcases(proq[PUBLIC_TEST_CASES])
+        except Exception as e:
+            raise ProqParseError(
+                message="Error occured while extracting public test cases"
+                f" - {e.__class__.__name__}: {e}",
+                content=content,
+            )
+
+        try:
+            proq[PRIVATE_TEST_CASES] = md2json.fold_level(
+                proq[PRIVATE_TEST_CASES], level=2, return_type="list"
+            )
+            proq[PRIVATE_TEST_CASES] = extract_testcases(proq[PRIVATE_TEST_CASES])
+        except Exception as e:
+            raise ProqParseError(
+                message="Error occured while extracting public test cases"
+                f" - {e.__class__.__name__}: {e}",
+                content=content,
+            )
+
         proq.update(yaml_header)
         return cls.model_validate(proq)
 
@@ -186,6 +236,16 @@ class ProQ(BaseModel):
         if not all(map(lambda x: x.passed, test_case_results)):
             return ProqCheck(solution_check=False, template_check=False)
 
+        if not re.match(r".*<sol>.*</sol>.*", self.solution.tagged_template, re.DOTALL):
+            print(
+                colored("Template Check:", attrs=["bold"]),
+                colored(
+                    "failed - No sol tag present in the template. "
+                    "Atleast one sol tag must be present in the template.",
+                    color="red",
+                ),
+            )
+            return ProqCheck(solution_check=True, template_check=False)
         # Test template with public and private test cases
         try:
             template_test_case_results = self.get_test_case_results(

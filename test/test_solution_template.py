@@ -2,7 +2,7 @@ import pathlib
 
 import pytest
 
-from proq.core_components import Solution
+from proqtor.core_components import Solution
 
 template_dir = pathlib.Path(__file__).parent / "solution_templates"
 

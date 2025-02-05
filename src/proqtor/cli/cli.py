@@ -1,15 +1,43 @@
 import os
+from contextlib import contextmanager
+from functools import wraps
 from pathlib import Path
 from typing import Literal
 
 import fire
 from termcolor import cprint
 
-from proq.core import ProQ
-from proq.evaluate_utils import ProqCheck
-from proq.utils import color_diff
+from proqtor.core import ProQ, ProqParseError
+from proqtor.evaluate_utils import ProqCheck
+from proqtor.utils import color_diff
 
 from . import export
+
+try:
+    from proqtor.gen_ai_utils import generate_proq
+except ImportError:
+    gen_ai_features = False
+
+
+@contextmanager
+def ignore_parse_errors():
+    try:
+        yield
+    except FileNotFoundError as e:
+        print(f"{e.filename} is not a valid file.")
+    except ProqParseError as e:
+        print("ProqParseError:", e.message)
+    except Exception as e:
+        print(e)
+
+
+def ignore_parse_error_wrapper(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        with ignore_parse_errors():
+            func(*args, **kwargs)
+
+    return wrapper
 
 
 class ProqCli:
@@ -56,7 +84,8 @@ class ProqCli:
             proq_files (list[str]): List of proq files to format.
         """
         for proq_file in proq_files:
-            ProQ.from_file(proq_file, render_template=False).to_file(proq_file)
+            with ignore_parse_errors():
+                ProQ.from_file(proq_file, render_template=False).to_file(proq_file)
 
     def correct(self, *proq_files: list[str]):
         """Corrects the test case outputs according to the solution.
@@ -65,16 +94,14 @@ class ProqCli:
             proq_files (list[str]): List of proq files to correct.
         """
         for proq_file in proq_files:
-            try:
+            with ignore_parse_errors():
                 proq = ProQ.from_file(proq_file).correct_outputs(inplace=True)
                 unrendered_proq = ProQ.from_file(proq_file, render_template=False)
                 unrendered_proq.public_test_cases = proq.public_test_cases
                 unrendered_proq.private_test_cases = proq.private_test_cases
                 unrendered_proq.to_file(proq_file)
 
-            except FileNotFoundError:
-                print(f"{proq_file} is not a valid file.")
-
+    @ignore_parse_error_wrapper
     def show_code(self, proq_file: str, render: bool = False):
         """Prints the whole solution where each part are highlighted.
 
@@ -90,6 +117,7 @@ class ProqCli:
         if proq.solution.suffix_invisible:
             cprint(proq.solution.suffix_invisible, on_color="on_light_grey")
 
+    @ignore_parse_error_wrapper
     def export_test_cases(self, proq_file, zip: bool = False):
         """Exports the test cases into a folder.
 
@@ -125,11 +153,13 @@ class ProqCli:
                 print(f"{file_path} is not a valid file")
                 continue
             print(f"Evaluating {file_path}")
-            proq = ProQ.from_file(file_path)
-            result = proq.evaluate(verbose=verbose, diff_mode=diff_mode)
-            if verbose:
-                print()
-            proq_checks.append((file_path, result))
+            with ignore_parse_errors():
+                proq = ProQ.from_file(file_path)
+
+                result = proq.evaluate(verbose=verbose, diff_mode=diff_mode)
+                if verbose:
+                    print()
+                proq_checks.append((file_path, result))
 
         n_proqs = len(proq_checks)
         cprint(
@@ -148,6 +178,46 @@ class ProqCli:
                 end=" ",
             )
             print(os.path.relpath(file_path, os.curdir))
+
+    if gen_ai_features:
+
+        def generate(
+            self,
+            prompt: str,
+            *examples: list[str],
+            output_file: str = None,
+            model: str = "groq:gemma2-9b-it",
+        ):
+            """Generates a new proq file based on the given prompt and examples.
+
+            Args:
+                prompt (str): The prompt describing the new proq
+                examples (str): The file paths to the example proqs
+                output_file (str): The file name to store the output.
+                    If not provided, the snake cased version of the title
+                    generated will be used as the file name.
+                model (str):
+                    The LLM model to be used in the format of "provider:model_id".
+                    The currently supported providers are groq and open-ai.
+            """
+            try:
+                proq = generate_proq(prompt, example_files=examples, model=model)
+            except ProqParseError as e:
+                print("Genrated Proq is not in the required format:", e.message)
+                with open(output_file, "w") as f:
+                    f.write(e.content)
+            else:
+                if output_file is None:
+                    output_file = proq.title.lower().replace(" ", "_") + ".md"
+                proq.to_file(output_file)
+            print(f"Output is saved to {output_file}")
+    else:
+
+        def generate(self):
+            print(
+                "Gen AI features are not installed. To use Gen AI features install the "
+                "optional dependencies proqtor[genai]"
+            )
 
 
 def main():

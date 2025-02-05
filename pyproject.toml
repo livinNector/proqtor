@@ -1,9 +1,9 @@
 [project]
-name = "proq"
-version = "1.1.0"
+name = "proqtor"
+version = "2.0.0"
 description = "A command-line based tool for authoring programming questions at scale."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = { file = "LICENSE.txt" }
 
 authors = [{ name = "Livin Nector", email = "livinnector2001@gmail.com" }]
@@ -19,16 +19,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-proqgen = [
-  "groq>=0.11.0",
-  "instructor>=1.6.3",
-  "python-dotenv>=1.0.1",
-  "requests>=2.32.3",
+genai = [
+    "langchain-groq>=0.2.3",
+    "langchain-openai>=0.3.2",
+    "langchain>=0.3.15",
 ]
 
 [project.urls]
 [project.scripts]
-proq = "proq.cli:main"
+proq = "proqtor.cli:main"
 
 
 [build-system]
@@ -40,6 +39,7 @@ build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 dev = ["ipykernel>=6.29.5", "pytest>=8.3.4", "ruff>=0.7.2"]
+
 
 [tool.ruff]
 extend-include = ["*.ipynb"]
