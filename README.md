@@ -84,7 +84,7 @@ def delete_first_three(l: list) -> None:
 
 #### Solution Parts Overview:
 - **Template** (Required): The `<template>...</template>` tag denotes the editable area of the code which can contain multiple `<sol>...</sol>` and `<los>...</los>` tags within. The template includes the parts of the code that common in both solution and the editable template.
-  - `<sol>...</sol>`: Marks the content that is only present in the solution.
+  - `<sol>...</sol>` (Required): Marks the content that is only present in the solution. There should be atleast one `sol` tag. 
   - `<los>...</los>`: Marks the content that is only present in the template.
 - **Prefix** (Optional): The part above the template block.  
   Non-editable code that appears before the main solution.
@@ -159,6 +159,7 @@ Use `proq [command] --help` to know more about the sub-command.
 - [`proq export-test-cases`](#exporting-the-test-cases) - export the test cases into a folder with two subfolders public and private with the inputs and outputs as text files.
 - [`proq show-code`](#checking-out-the-code-block) - Displays the different sections of the code block in a highlighted manner.
 - [`proq export`](#exporting-a-proq) - export a **proq file** or a **proq set config file** as JSON, html or pdf.
+- [`proq generate`](#generating-new-proqs-with-few-shot-examples-experimental) - Generate proqs with few shot examples(experimental).
 
 ### Examples
 
@@ -270,6 +271,15 @@ Use `proq [command] --help` to know more about the sub-command.
    proq export sample.md -f html --hide-private-testcases
    ```
 
+#### Generating new proqs with Few shot examples (experimental)
+
+`proq generate` uses LLMs with a prompt and fewshot examples to create new proq files. Currently Open AI and groq models are supported. This will need the respective API keys to be added as environment variables. Models are specified in the format `"provider:model_name"`.
+
+**Examples**
+```
+export GROQ_API_KEY=<Your API Key>
+proq generate "write a function to find the sum of squares of odd numbers in a given list" example1.md example2.md  -o sum_squares_odd.md
+```
 
 ## Proq Set Config File
 
