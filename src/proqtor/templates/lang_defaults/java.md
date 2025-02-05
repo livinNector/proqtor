@@ -1,4 +1,4 @@
-```java Test.java -b 'javac Test.java' -r 'Test'
+```java Test.java -b 'javac Test.java' -r 'java Test'
 // Prefix goes here
 import java.util.*;
 <template>
