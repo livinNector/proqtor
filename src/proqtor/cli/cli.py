@@ -15,6 +15,8 @@ from . import export
 
 try:
     from proqtor.gen_ai_utils import generate_proq
+
+    gen_ai_features = True
 except ImportError:
     gen_ai_features = False
 
