@@ -35,6 +35,12 @@ class ProqParseError(Exception):
         self.content = content
 
 
+class FrontMatter(BaseModel):
+    title: str | None = None
+    tags: list[str] | None = None
+    model_config = ConfigDict(extra="allow")
+
+
 class ProQ(BaseModel):
     """Pydantic model for a Programming Question (ProQ)."""
 
@@ -190,6 +196,14 @@ class ProQ(BaseModel):
             return ProQ.from_str(
                 f.read(), os.path.dirname(proq_file), render_template=render_template
             )
+
+    @property
+    def front_matter(self):
+        return FrontMatter(
+            title=self.title,
+            tags=self.tags,
+            **self.model_extra,
+        )
 
     def to_str(self) -> str:
         return package_env.get_template("proq_template.md.jinja").render(proq=self)

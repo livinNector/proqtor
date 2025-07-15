@@ -14,10 +14,7 @@
 {%endfor-%}
 {%endmacro-%}
 ---
-title: {{proq.title}}
-{%if proq.tags -%}
-tags: [{{proq.tags | join(', ')}}]
-{%endif-%}
+{{proq.front_matter.model_dump(exclude_defaults=True, exclude_none=True,exclude_unset=True)|yaml|trim}}
 ---
 
 # Problem Statement
