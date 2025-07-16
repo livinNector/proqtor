@@ -20,9 +20,9 @@ dependencies = [
 
 [project.optional-dependencies]
 genai = [
-    "langchain-groq>=0.2.3",
-    "langchain-openai>=0.3.2",
-    "langchain>=0.3.15",
+  "langchain-groq>=0.2.3",
+  "langchain-openai>=0.3.2",
+  "langchain>=0.3.15",
 ]
 
 [project.urls]
@@ -36,6 +36,25 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
 "*" = ["templates/**/*", "data/*"]
+
+
+[tool.bumpversion]
+current_version = "2.0.1"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+search = "{current_version}"
+replace = "{new_version}"
+regex = false
+ignore_missing_version = false
+ignore_missing_files = false
+tag = true
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "Bump version: {current_version} → {new_version}"
+allow_dirty = false
+commit = true
+message = "Bump version: {current_version} → {new_version}"
+
 
 [dependency-groups]
 dev = ["ipykernel>=6.29.5", "pytest>=8.3.4", "ruff>=0.7.2"]
