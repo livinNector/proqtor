@@ -1,5 +1,6 @@
 import os
 from collections import namedtuple
+from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Literal
@@ -39,6 +40,26 @@ def check_test_cases(
     return results
 
 
+@contextmanager
+def code_run_env(code, source_filename):
+    """Writes the code in the source file in a tempdir and changes to that dir.
+
+    Args:
+        code (str): The source code toe be written.
+        source_filename (str): The filename to use to write the source code.
+    """
+    curdir = os.path.abspath(os.curdir)
+    with TemporaryDirectory() as tempdirname:
+        os.chdir(tempdirname)
+        try:
+            Path(source_filename).write_text(code)
+            yield
+        except CommandFailedError as e:
+            raise BuildFailedError(e.command_output)
+        finally:
+            os.chdir(curdir)
+
+
 def get_test_case_results(
     code,
     test_cases,
@@ -61,18 +82,10 @@ def get_test_case_results(
     Raises:
         BuildFailedError:  if the build process fails.
     """
-    curdir = os.path.abspath(os.curdir)
-    with TemporaryDirectory() as tempdirname:
-        os.chdir(tempdirname)
-        try:
-            Path(source_filename).write_text(code)
-            if build_command:
-                get_command_output(build_command, raise_on_fail=True)
-            return check_test_cases(run_command, test_cases)
-        except CommandFailedError as e:
-            raise BuildFailedError(e.command_output)
-        finally:
-            os.chdir(curdir)
+    with code_run_env(code, source_filename=source_filename):
+        if build_command:
+            get_command_output(build_command, raise_on_fail=True)
+        return check_test_cases(run_command, test_cases)
 
 
 def print_failed_test_cases(
@@ -152,13 +165,13 @@ def print_template_check_results(public_test_cases, private_test_cases, template
         passed_test_cases = ",".join(map(str, get_passed(public_test_cases)))
         if passed_test_cases:
             cprint(
-                "public testcase: " f"{passed_test_cases} " "passed",
+                f"public testcase: {passed_test_cases} passed",
                 "red",
                 end="\t",
             )
         passed_test_cases = ",".join(map(str, get_passed(private_test_cases)))
         if passed_test_cases:
             cprint(
-                "private testcase: " f"{passed_test_cases} " "passed",
+                f"private testcase: {passed_test_cases} passed",
                 "red",
             )

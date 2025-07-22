@@ -103,17 +103,33 @@ class ProqCli:
                 unrendered_proq.private_test_cases = proq.private_test_cases
                 unrendered_proq.to_file(proq_file)
 
+    def run(self, proq_file: str):
+        """Runs the solution as it is run from the terminal."""
+        proq = ProQ.from_file(proq_file=proq_file, render_template=True)
+        proq.run()
+
     @ignore_parse_error_wrapper
-    def show_code(self, proq_file: str, render: bool = False):
+    def show_code(
+        self,
+        proq_file: str,
+        render: bool = False,
+        mode: Literal["solution", "template", "diff"] = "diff",
+    ):
         """Prints the whole solution where each part are highlighted.
 
         Args:
             proq_file (str): The proq file.
             render (bool): Whether to render the jinja template
+            mode (Literal["solution", "template", "diff"]): Display mode
         """
         proq = ProQ.from_file(proq_file, render_template=render)
         cprint(proq.solution.prefix, color="grey", end="")
-        color_diff(proq.solution.template, proq.solution.solution)
+        if mode == "diff":
+            color_diff(proq.solution.template, proq.solution.solution)
+        elif mode == "solution":
+            print(proq.solution.solution)
+        elif mode == "template":
+            print(proq.solution.template)
         if proq.solution.suffix:
             cprint(proq.solution.suffix, color="grey", end="")
         if proq.solution.suffix_invisible:
@@ -165,7 +181,7 @@ class ProqCli:
 
         n_proqs = len(proq_checks)
         cprint(
-            f"Total of {n_proqs} proq{'s' if n_proqs>1 else ''} evaluated.",
+            f"Total of {n_proqs} proq{'s' if n_proqs > 1 else ''} evaluated.",
             attrs=["bold"],
         )
         for file_path, proq_check in proq_checks:

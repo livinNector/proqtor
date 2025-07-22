@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import subprocess
 import warnings
 from typing import Generic, Self, TypeVar
 
@@ -14,10 +15,12 @@ from .core_components import Solution, TestCase
 from .evaluate_utils import (
     BuildFailedError,
     ProqCheck,
+    code_run_env,
     get_test_case_results,
     print_solution_check_results,
     print_template_check_results,
 )
+from .execute_utils import get_command_output
 from .parse import extract_solution, extract_testcases
 from .prog_langs import ProgLang
 from .template_utils import get_relative_env, package_env
@@ -221,6 +224,18 @@ class ProQ(BaseModel):
             execute_config.run,
             execute_config.build,
         )
+
+    def run(self):
+        """Executes the code as it is run from the command line."""
+        with code_run_env(
+            self.solution.solution_code, self.solution.execute_config.source_filename
+        ):
+            if self.solution.execute_config.build:
+                get_command_output(
+                    self.solution.execute_config.build, raise_on_fail=True
+                )
+
+            return subprocess.run(self.solution.execute_config.run.split())
 
     def evaluate(self, verbose=False, diff_mode=False) -> ProqCheck:
         n_public = len(self.public_testcases)
