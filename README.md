@@ -250,6 +250,21 @@ Use `proq [command] --help` to know more about the sub-command.
    proq show-code -r
    ```
 
+2. Show only the template or the solution instead of "diff".
+   ```
+   proq show-code --mode template
+   proq show-code -m solution
+   ```
+
+#### Running the Solution
+
+`proq run` command is used to run the solution in a **tempdir** as it is run from commandline. It uses the build and run arguments from the execute config in the solution block (see [this](#code-block-header---execute-config)). 
+
+```
+proq run sample.md
+```
+
+
 
 #### Exporting a proq
 
