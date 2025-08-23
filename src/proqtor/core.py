@@ -8,6 +8,7 @@ from typing import Generic, Self, TypeVar
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from termcolor import colored, cprint
+from unidecode import unidecode
 
 import md2json
 
@@ -208,12 +209,15 @@ class ProQ(BaseModel):
             **self.model_extra,
         )
 
-    def to_str(self) -> str:
-        return package_env.get_template("proq_template.md.jinja").render(proq=self)
+    def to_str(self, asciify=False) -> str:
+        output = package_env.get_template("proq_template.md.jinja").render(proq=self)
+        if asciify:
+            output = unidecode(output)
+        return output
 
-    def to_file(self, file_name) -> str:
+    def to_file(self, file_name, asciify=False) -> str:
         with open(file_name, "w") as f:
-            f.write(self.to_str())
+            f.write(self.to_str(asciify=asciify))
 
     def get_test_case_results(self, code, test_cases):
         execute_config = self.solution.execute_config

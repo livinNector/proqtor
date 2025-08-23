@@ -79,15 +79,19 @@ class ProqCli:
             lang=lang.lower().strip(), n_public=n_public, n_private=n_private
         ).to_file(output_file)
 
-    def format(self, *proq_files: list[str]):
+    def format(self, *proq_files: list[str], asciify=False):
         """Formats the given files according to the proq template.
 
         Args:
             proq_files (list[str]): List of proq files to format.
+            asciify (bool):
+                Whether to convert non ascii chars to ascii.
         """
         for proq_file in proq_files:
             with ignore_parse_errors():
-                ProQ.from_file(proq_file, render_template=False).to_file(proq_file)
+                ProQ.from_file(proq_file, render_template=False).to_file(
+                    proq_file, asciify=asciify
+                )
 
     def correct(self, *proq_files: list[str]):
         """Corrects the test case outputs according to the solution.
