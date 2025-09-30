@@ -171,7 +171,7 @@ Use `proq [command] --help` to know more about the sub-command.
    ```
 2. Specifying number of public and private testcases.  
    ```bash
-   proq create --num-public 3 --num-private 5 sample.md
+   proq create --n-public 3 --n-private 5 sample.md
    ```
 3. Specifying the programming language. Currently `python`, `java` and `c` are supported. For other languages the execute config have to be configured manually ([see here](#code-block-header---execute-config)).  
    ```bash
