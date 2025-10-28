@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from langchain.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 
@@ -10,7 +10,7 @@ from .core import ProQ
 def get_model(model_name):
     provider, model = model_name.split(":")
     match provider:
-        case "open-ai":
+        case "openai":
             model = ChatOpenAI(model=model)
         case "groq":
             model = ChatGroq(model=model)
@@ -22,7 +22,7 @@ example_prompt = ChatPromptTemplate.from_messages(
 )
 
 
-def generate_proq(prompt, example_files, model="groq:gemma2-9b-it"):
+def generate_proq(prompt, example_files, model="groq:openai/gpt-oss-20b"):
     proqs = [
         ProQ.from_file(example_file, render_template=False)
         for example_file in example_files

@@ -288,9 +288,9 @@ proq run sample.md
 
 #### Generating new proqs with Few shot examples (experimental)
 
-`proq generate` uses LLMs with a prompt and fewshot examples to create new proq files. Currently Open AI (`open-ai`) and `groq` models are supported. This will need the respective API keys to be added as environment variables. Models are specified in the format `"provider:model_name"`.
+`proq generate` uses LLMs with a prompt and fewshot examples to create new proq files. Currently Open AI (`openai`) and `groq` models are supported. This will need the respective API keys to be added as environment variables. Models are specified in the format `"provider:model_name"`.
 
-1. Using default model "groq:gemma2-9b-it".
+1. Using default model "groq:openai/gpt-oss-20b".
    ```
    export GROQ_API_KEY=<Your API Key>
    proq generate "write a function to find the sum of squares of odd numbers in a given list" example1.md example2.md  -o sum_squares_odd.md
@@ -298,7 +298,7 @@ proq run sample.md
 2. Specifying different model
    ```
    export OPENAI_API_KEY=<Your API Key>
-   proq generate "write a function to find the sum of squares of odd numbers in a given list" example1.md example2.md  -o sum_squares_odd.md -m "open-ai:gpt-4o-mini"
+   proq generate "write a function to find the sum of squares of odd numbers in a given list" example1.md example2.md  -o sum_squares_odd.md -m "openai:gpt-4o-mini"
    ```
 
 ## Proq Set Config File
