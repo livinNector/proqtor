@@ -30,6 +30,8 @@ def is_two_digit_even(n: int) -> bool:
     <los>...</los>
     <sol>return 10 <= n <= 99 and n % 2 == 0</sol>
 </template>
+import sys
+exec(sys.stdin.read())
 ```
 
 # Public Test Cases
@@ -37,10 +39,7 @@ def is_two_digit_even(n: int) -> bool:
 ## Input 1
 
 ```
-is_equal(
-    is_two_digit_even(42),
-    True
-)
+print(is_two_digit_even(42))
 ```
 
 ## Output 1
@@ -52,10 +51,7 @@ True
 ## Input 2
 
 ```
-is_equal(
-    is_two_digit_even(55),
-    False
-)
+print(is_two_digit_even(55))
 ```
 
 ## Output 2
@@ -67,10 +63,7 @@ False
 ## Input 3
 
 ```
-is_equal(
-    is_two_digit_even(100),
-    False
-)
+print(is_two_digit_even(100))
 ```
 
 ## Output 3
@@ -85,25 +78,13 @@ False
 
 ```
 n = 102
-is_equal(
-    is_two_digit_even(n),
-    False
-)
+print(is_two_digit_even(n))
 n = 10
-is_equal(
-    is_two_digit_even(n),
-    True
-)
+print(is_two_digit_even(n))
 n = 88
-is_equal(
-    is_two_digit_even(n),
-    True
-)
+print(is_two_digit_even(n))
 n = 11
-is_equal(
-    is_two_digit_even(n),
-    False
-)
+print(is_two_digit_even(n))
 ```
 
 ## Output 1
