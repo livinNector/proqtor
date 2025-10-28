@@ -1,10 +1,10 @@
-import pathlib
+from pathlib import Path
 
 import pytest
 
 from proqtor.core_components import Solution
 
-template_dir = pathlib.Path(__file__).parent / "solution_templates"
+template_dir = Path(__file__).parent / "solution_templates"
 
 
 def get_solution_template(name):

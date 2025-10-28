@@ -27,8 +27,24 @@ def get_tag_content(tag: str, html: str) -> str:
 
 
 def remove_tag(html, tag):
+    tag_re = rf"<{re.escape(tag)}( .*?|)>(.*?)</{re.escape(tag)}>"
+    html = re.sub(
+        rf"^[^\S\n]*{tag_re}[^\S\n]*($|\n)",
+        "",
+        html,
+        flags=re.DOTALL,
+    )
+    html = re.sub(
+        rf"\n[^\S\n]*{tag_re}[^\S\n]*(?P<trail>$|\n)",
+        r"\g<trail>",
+        html,
+        flags=re.DOTALL,
+    )
     return re.sub(
-        f"<{re.escape(tag)}( .*?|)>(.*?)</{re.escape(tag)}>", "", html, flags=re.DOTALL
+        tag_re,
+        "",
+        html,
+        flags=re.DOTALL,
     )
 
 
@@ -40,8 +56,18 @@ def remove_tags(html, tags: list[str]):
 
 def strip_tags(html: str, tags: list[str]) -> str:
     """Removes the given tags from an HTML text without removing the content."""
+    html = re.sub(
+        (
+            r"(^|\n)[^\S\n]*<\s*(\/\s*)?({tags})( .*?|)>[^\S\n]*(?P<trail>\n|$)".format(
+                tags="|".join(map(re.escape, tags))
+            )
+        ),
+        r"\g<trail>",
+        html,
+        flags=re.DOTALL,
+    )
     return re.sub(
-        r"<\/?({tags})( .*?|)>".format(tags="|".join(map(re.escape, tags))),
+        (r"<\s*(\/\s*)?({tags})( .*?|)>".format(tags="|".join(map(re.escape, tags)))),
         "",
         html,
         flags=re.DOTALL,
@@ -76,20 +102,20 @@ def extract_codeblock_content(text):
 
 
 def extract_code_parts(code):
+    code = re.sub(r"[^\S\n]*\n", "\n", code)  # cleaning spaces in blank lines
     code_parts = re.match(
-        r"(?P<prefix>.*)<template>(?P<tagged_template>.*)</template>(?P<suffix>.*)",
+        r"(?P<prefix>.*?)[^\S\n]*<template>([^\S\n]*\n)?(?P<tagged_template>.*?)[^\S\n]*</template>[^\S\n]*\n?(?P<suffix>.*)",
         code,
         re.DOTALL,
     )
-
     # Assume the whole code as solution if to tags are there
     if code_parts is None:
         return {
             "prefix": "",
             "suffix": "",
             "suffix_invisible": "",
-            "tagged_template": "\n<sol>\n"
-            f"{code}{"" if code[-1]=='\n' else '\n'}"
+            "tagged_template": "<sol>\n"
+            f"{code}{'' if code[-1] == '\n' else '\n'}"
             "</sol>\n",
         }
 
@@ -102,16 +128,17 @@ def extract_code_parts(code):
         code_parts["suffix"], code_parts["suffix_invisible"] = code_parts[
             "suffix"
         ].split("<suffix_invisible>")
-        code_parts["suffix_invisible"] = strip_tags(
-            code_parts["suffix_invisible"], ["suffix_invisible"]
-        ).rstrip()
+        code_parts["suffix_invisible"] = (
+            strip_tags(code_parts["suffix_invisible"], ["suffix_invisible"]).rstrip()
+            + "\n"
+        )
     else:
         code_parts["suffix_invisible"] = ""
 
     if not code_parts["suffix"].strip():
         code_parts["suffix"] = ""
     elif not code_parts["suffix_invisible"]:
-        code_parts["suffix"] = code_parts["suffix"].rstrip()
+        code_parts["suffix"] = code_parts["suffix"].rstrip() + "\n"
 
     return code_parts
 
