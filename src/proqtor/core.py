@@ -41,7 +41,7 @@ class ProqParseError(Exception):
 
 class FrontMatter(BaseModel):
     title: str | None = None
-    tags: list[str] | None = None
+    tags: list[str] | None = Field(default_factory=list)
     model_config = ConfigDict(extra="allow")
 
 
