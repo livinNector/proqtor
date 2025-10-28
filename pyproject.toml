@@ -14,7 +14,6 @@ dependencies = [
   "fire",
   "marko",
   "Jinja2",
-  "strenum>=0.4.15",
   "termcolor>=2.5.0",
   "ipython~=8.0",
   "unidecode>=1.4.0",
