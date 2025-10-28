@@ -30,6 +30,8 @@ genai = [
 [project.urls]
 [project.scripts]
 proq = "proqtor.cli:main"
+pq = "proqtor.cli:main"
+proqtor = "proqtor.cli:main"
 
 
 [build-system]
